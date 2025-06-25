@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Container } from 'react-bootstrap';
 import LogsUpload from '../components/LogsUploadForm/LogsUpload';
 import ExperimentInfo from '../components/ExperimentInfoForm/ExperimentInfo';
 import DevicesForm from '../components/DeviceInfoForm/DeviceInfo';
 import EventInfo from '../components/EventInfoForm/EventInfo';
 import OtherFiles from '../components/OtherFilesForm/OtherFiles';
-import { FormData } from '../types/OtherTypes';
+import { FormData, TestEntry } from '../types/OtherTypes';
 import { Operator, SelectItem } from '../types/ExperimentInfoFormTypes';
+import { UploadFile } from '../types/LogsUploadTypes';
+import { AdditionalFile } from '../types/OtherFilesTypes';
 
-const FormsPage: React.FC = () => {
+interface FormsPageProps {
+    onSubmit: (test: TestEntry) => void;
+    onCancel: () => void;
+}
+
+const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
     const [currentStep, setCurrentStep] = useState<number>(1);
     const [formData, setFormData] = useState<FormData>({
         files: [],
@@ -27,15 +34,7 @@ const FormsPage: React.FC = () => {
             loadingLocations: true,
             loadingOperators: true,
         },
-        devices: [
-            {
-                mavlinkSysId: '',
-                serialNumber: '',
-                deviceType: '',
-                onboardVideos: [],
-                parametersFiles: [],
-            },
-        ],
+        devices: [],
         events: [
             {
                 time: '',
@@ -69,18 +68,17 @@ const FormsPage: React.FC = () => {
                     reportFile,
                     responsibleOperator,
                     recordCreator,
-                    operators
+                    operators,
                 } = formData.experiment;
-                
-                const hasRecordCreator = recordCreator !== null;;
+
+                const hasRecordCreator = recordCreator !== null;
                 const hasResponsibleOperator = responsibleOperator !== null;
                 const hasReportFile = reportFile !== null;
                 const hasLocation = selectedLocation !== null;
                 const hasOperators = operators.length > 0;
                 const allTextFilelds =
-                    testDate.trim() !== '' &&
-                    description.trim() !== '';
-                
+                    testDate.trim() !== '' && description.trim() !== '';
+
                 const allRequiredFieldsFilled =
                     hasRecordCreator &&
                     hasResponsibleOperator &&
@@ -88,30 +86,27 @@ const FormsPage: React.FC = () => {
                     allTextFilelds &&
                     hasLocation &&
                     hasOperators;
-                
-                if (!allRequiredFieldsFilled) {
-                    alert(
-                        'Заполните все требуемые поля'
-                    );
-                    return false;
-                }
-                return true;
 
-            case 3: // DeviceInfo
-                if (formData.devices.length === 0) return false;
-                const allDeviceInfoFields = formData.devices.every(
-                    (device) =>
-                        device.mavlinkSysId.trim() !== '' &&
-                        device.serialNumber.trim() !== '' &&
-                        device.deviceType.trim() !== '' &&
-                        device.onboardVideos.length > 0 &&
-                        device.parametersFiles.length > 0
-                );
-                if (!allDeviceInfoFields) {
+                if (!allRequiredFieldsFilled) {
                     alert('Заполните все требуемые поля');
                     return false;
                 }
                 return true;
+
+            // case 3: // DeviceInfo
+            //     if (formData.devices.length === 0) return false;
+            //     const allDeviceInfoFields = formData.devices.every(
+            //         (device) =>
+            //             device.mavlinkSysId.trim() !== '' &&
+            //             device.deviceType.trim() !== '' &&
+            //             device.onboardVideos.length > 0 &&
+            //             device.parametersFiles.length > 0
+            //     );
+            //     if (!allDeviceInfoFields) {
+            //         alert('Заполните все требуемые поля');
+            //         return false;
+            //     }
+            //     return true;
 
             case 4: // EventsInfo
                 if (!formData.experiment.hasEvents) return true;
@@ -171,14 +166,15 @@ const FormsPage: React.FC = () => {
 
         if (
             fieldName.includes('onboardVideos') ||
-            fieldName.includes('parametersFiles')) {
+            fieldName.includes('parametersFiles')
+        ) {
             return Array.isArray(value) ? value.length === 0 : true;
         }
-        
+
         if (typeof value === 'string') {
             return value.trim() === '';
         }
-        
+
         return !value;
     };
 
@@ -194,7 +190,7 @@ const FormsPage: React.FC = () => {
                 'reportFile',
                 'operators',
                 'responsibleOperator',
-                'recordCreator'
+                'recordCreator',
             ];
 
             requiredFields.forEach((field) => {
@@ -205,20 +201,22 @@ const FormsPage: React.FC = () => {
                 newTouched[`experiment.operators[${operator.id}].fullName`] =
                     true;
             });
-        } else if (currentStep === 3) {
-            // DeviceInfo
-            formData.devices.forEach((_, index) => {
-                [
-                    'mavlinkSysId',
-                    'serialNumber',
-                    'deviceType',
-                    'onboardVideos',
-                    'parametersFiles',
-                ].forEach((field) => {
-                    newTouched[`devices[${index}].${field}`] = true;
-                });
-            });
-        } else if (currentStep === 4) {
+        }
+        // else if (currentStep === 3) {
+        //     // DeviceInfo
+        //     formData.devices.forEach((_, index) => {
+        //         [
+        //             'mavlinkSysId',
+        //             'serialNumber',
+        //             'deviceType',
+        //             'onboardVideos',
+        //             'parametersFiles',
+        //         ].forEach((field) => {
+        //             newTouched[`devices[${index}].${field}`] = true;
+        //         });
+        //     });
+        // }
+        else if (currentStep === 4) {
             // EventInfo
             formData.events.forEach((_, index) => {
                 ['time', 'description'].forEach((field) => {
@@ -226,7 +224,7 @@ const FormsPage: React.FC = () => {
                 });
             });
         }
-        
+
         setTouchedFields((prev) => ({ ...prev, ...newTouched }));
 
         if (!validateStep(currentStep)) {
@@ -262,7 +260,21 @@ const FormsPage: React.FC = () => {
             return;
         }
 
-        alert('Ура!');
+        const newTest: TestEntry = {
+            id: Date.now().toString(),
+            creationDate: new Date().toLocaleDateString('ru-RU'),
+            testDate: formData.experiment.testDate,
+            description: formData.experiment.description,
+            location: formData.experiment.selectedLocation?.label || '',
+            equipment: formData.devices
+                .map(
+                    (device) => `${device.mavlinkSysId} (${device.deviceType})`
+                )
+                .join(', '),
+        };
+
+        onSubmit(newTest); // Передаем данные в App
+        onCancel();
     };
 
     const clearTouchedFieldsByPrefix = (prefix: string) => {
@@ -277,14 +289,27 @@ const FormsPage: React.FC = () => {
         });
     };
 
+    const onFilesUploaded = useCallback((files: UploadFile[]) => {
+        setFormData((prev) => ({ ...prev, files }));
+    }, [])
+
+    const handleotherFilesChange = useCallback((newOtherFiles: {
+        screenshots: AdditionalFile[];
+        screenRecordings: (File | null)[];
+        additionalAttachments: (File | null)[];
+    }) => {
+        setFormData((prev) => ({
+            ...prev,
+            otherFiles: newOtherFiles,
+        }));
+    }, [])
+
     return (
         <Container className="my-4" style={{ maxWidth: '800px' }}>
             {currentStep === 1 ? (
                 <LogsUpload
                     onNext={handleNext}
-                    onFilesUploaded={(files) =>
-                        setFormData((prev) => ({ ...prev, files }))
-                    }
+                    onFilesUploaded={onFilesUploaded}
                     uploadedFiles={formData.files}
                 />
             ) : // В разделе return компонента FormsPage замените текущий закомментированный блок на:
@@ -315,6 +340,9 @@ const FormsPage: React.FC = () => {
                                         label: op.label,
                                     })
                                 ),
+                                responsibleOperator:
+                                    experimentData.responsibleOperator,
+                                recordCreator: experimentData.recordCreator,
                             },
                         }));
                     }}
@@ -338,7 +366,6 @@ const FormsPage: React.FC = () => {
                     }}
                     onBack={() => setCurrentStep(2)}
                     onNext={handleNext}
-                    hasEvents={formData.experiment.hasEvents}
                     shouldHighlightError={shouldHighlightError}
                     markFieldAsTouched={markFieldAsTouched}
                     validateStep={() => validateStep(3)}
@@ -374,12 +401,7 @@ const FormsPage: React.FC = () => {
                     markFieldAsTouched={markFieldAsTouched}
                     clearTouchedFieldsByPrefix={clearTouchedFieldsByPrefix}
                     validateStep={() => validateStep(5)}
-                    onChange={(newOtherFiles) => {
-                        setFormData((prev) => ({
-                            ...prev,
-                            otherFiles: newOtherFiles,
-                        }));
-                    }}
+                    onChange={handleotherFilesChange}
                 />
             ) : null}
         </Container>

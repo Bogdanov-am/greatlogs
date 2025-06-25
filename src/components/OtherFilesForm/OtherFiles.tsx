@@ -170,7 +170,7 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
                     >
                         Назад
                     </Button>
-                    <Button variant="primary" onClick={onSubmit} size="lg">
+                    <Button variant="primary" onClick={() => onSubmit()} size="lg">
                         Создать запись
                     </Button>
                 </div>

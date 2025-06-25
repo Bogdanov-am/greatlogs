@@ -56,8 +56,6 @@ const ExperimentInfo: React.FC<
                     availableOperators: operators,
                     location: data.locations || '',
                     operators: data.operators || [],
-                    responsibleOperator: null,
-                    recordCreator: null,
                 });
 
                 setLoading({ locations: false, operators: false });

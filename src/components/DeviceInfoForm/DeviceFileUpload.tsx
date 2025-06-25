@@ -1,11 +1,9 @@
 import React from 'react';
 import { Form, Row, Col, ListGroup, Badge } from 'react-bootstrap';
-import { Device } from '../../types/DeviceInfoTypes';
 import { DeviceFileUploadProps } from '../../types/DeviceInfoTypes';
 
 const DeviceFileUpload: React.FC<DeviceFileUploadProps> = ({
     device,
-    deviceIndex,
     handleFileChange,
     shouldHighlightError,
     handleBlur,
@@ -38,7 +36,7 @@ const DeviceFileUpload: React.FC<DeviceFileUploadProps> = ({
                         <h6
                             style={{
                                 color: shouldHighlightError(
-                                    `devices[${deviceIndex}].onboardVideos`,
+                                    'onboardVideos',
                                     device.onboardVideos
                                 )
                                     ? 'red'
@@ -58,7 +56,7 @@ const DeviceFileUpload: React.FC<DeviceFileUploadProps> = ({
                         size="sm"
                         style={{
                             border: shouldHighlightError(
-                                `devices[${deviceIndex}].onboardVideos`,
+                                'onboardVideos',
                                 device.onboardVideos
                             )
                                 ? '1px solid red'
@@ -67,7 +65,7 @@ const DeviceFileUpload: React.FC<DeviceFileUploadProps> = ({
                         required
                     />
                     {shouldHighlightError(
-                        `devices[${deviceIndex}].onboardVideos`,
+                        'onboardVideos',
                         device.onboardVideos
                     ) && (
                         <Form.Text className="text-danger">
@@ -103,7 +101,7 @@ const DeviceFileUpload: React.FC<DeviceFileUploadProps> = ({
                         <h6
                             style={{
                                 color: shouldHighlightError(
-                                    `devices[${deviceIndex}].parametersFiles`,
+                                    'parametersFiles',
                                     device.parametersFiles
                                 )
                                     ? 'red'
@@ -122,7 +120,7 @@ const DeviceFileUpload: React.FC<DeviceFileUploadProps> = ({
                         multiple
                         style={{
                             border: shouldHighlightError(
-                                `devices[${deviceIndex}].parametersFiles`,
+                                'parametersFiles',
                                 device.parametersFiles
                             )
                                 ? '1px solid red'
@@ -132,7 +130,7 @@ const DeviceFileUpload: React.FC<DeviceFileUploadProps> = ({
                         size="sm"
                     />
                     {shouldHighlightError(
-                        `devices[${deviceIndex}].parametersFiles`,
+                        'parametersFiles',
                         device.parametersFiles
                     ) && (
                         <Form.Text className="text-danger">

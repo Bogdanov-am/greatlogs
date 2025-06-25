@@ -1,20 +1,17 @@
-import React from "react";
-import { Button, Card, Container } from "react-bootstrap";
-import { DeviceItemProps } from "../../types/DeviceInfoTypes";
-import DeviceFormFields from "./DeviceFormFields";
-import DeviceFileUpload from "./DeviceFileUpload";
+import React from 'react';
+import { Card, Container } from 'react-bootstrap';
+import { DeviceItemProps } from '../../types/DeviceInfoTypes';
+import DeviceFormFields from './DeviceFormFields';
+import DeviceFileUpload from './DeviceFileUpload';
 
 const DeviceItem: React.FC<DeviceItemProps> = ({
     device,
-    deviceIndex,
     onChange,
-    onRemove,
-    showRemoveButton,
     shouldHighlightError,
     markFieldAsTouched,
 }) => {
     const handleBlur = (fieldName: string) => {
-        markFieldAsTouched(`devices[${deviceIndex}].${fieldName}`);
+        markFieldAsTouched(`devices.${fieldName}`);
     };
 
     const handleFileChange = (
@@ -22,16 +19,14 @@ const DeviceItem: React.FC<DeviceItemProps> = ({
         files: File[]
     ) => {
         onChange({ ...device, [field]: files });
-        markFieldAsTouched(`devices[${deviceIndex}.${field}]`)
+        markFieldAsTouched(`devices.${field}`);
     };
 
     return (
-        <Container className="text-start">
-            <h5>Аппарат {deviceIndex + 1}</h5>
-            <Card className="mb-3 p-3">
+        <Container className="text-start mb-3">
+            <Card className="p-3">
                 <DeviceFormFields
                     device={device}
-                    deviceIndex={deviceIndex}
                     onChange={onChange}
                     shouldHighlightError={shouldHighlightError}
                     handleBlur={handleBlur}
@@ -39,22 +34,10 @@ const DeviceItem: React.FC<DeviceItemProps> = ({
 
                 <DeviceFileUpload
                     device={device}
-                    deviceIndex={deviceIndex}
                     handleFileChange={handleFileChange}
                     shouldHighlightError={shouldHighlightError}
                     handleBlur={handleBlur}
                 />
-
-                {showRemoveButton && (
-                    <Button
-                        variant="outline-danger"
-                        onClick={onRemove}
-                        size="sm"
-                        className="mt-2"
-                    >
-                        Удалить аппарат
-                    </Button>
-                )}
             </Card>
         </Container>
     );

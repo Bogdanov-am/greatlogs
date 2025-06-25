@@ -1,71 +1,42 @@
 import React from 'react';
-import { Card, ListGroup } from 'react-bootstrap';
+import { Button, Card } from 'react-bootstrap';
 import { TestEntry } from '../types/OtherTypes';
 
-const TestCard: React.FC<TestEntry> = ({
+interface ExperimentCardProps extends TestEntry {
+    onDelete: () => void;
+}
+
+const ExperimentCard: React.FC<ExperimentCardProps> = ({
     creationDate,
     testDate,
     description,
     location,
-    equipment
+    equipment,
+    onDelete,
 }) => {
     return (
-        <Card
-            className="mb-3"
-            style={{
-                width: '100%',
-                textAlign: 'left',
-            }}
-        >
+        <Card className="mb-3" style={{ width: '100%', textAlign: 'left' }}>
             <Card.Body>
-                <ListGroup
-                    variant="flush"
-                    style={{ backgroundColor: 'transparent' }}
-                >
-                    <ListGroup.Item
-                        style={{
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                        }}
-                    >
-                        <strong>Дата создания:</strong> {creationDate}
-                    </ListGroup.Item>
-                    <ListGroup.Item
-                        style={{
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                        }}
-                    >
-                        <strong>Дата испытания:</strong> {testDate}
-                    </ListGroup.Item>
-                    <ListGroup.Item
-                        style={{
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                        }}
-                    >
-                        <strong>Краткое описание:</strong> {description}
-                    </ListGroup.Item>
-                    <ListGroup.Item
-                        style={{
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                        }}
-                    >
-                        <strong>Место:</strong> {location}
-                    </ListGroup.Item>
-                    <ListGroup.Item
-                        style={{
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                        }}
-                    >
-                        <strong>Аппараты:</strong> {equipment}
-                    </ListGroup.Item>
-                </ListGroup>
+                <Card.Title>Запись от {creationDate}</Card.Title>
+                <Card.Text>
+                    <strong>Дата испытания: </strong>
+                    {testDate}
+                    <br />
+                    <strong>Описание: </strong>
+                    {description}
+                    <br />
+                    <strong>Локация: </strong>
+                    {location}
+                    <br />
+                    <strong>Аппараты: </strong>
+                    {equipment}
+                </Card.Text>
+                <Button variant="danger" onClick={onDelete} className="mb-3">
+                    Удалить
+                </Button>
             </Card.Body>
         </Card>
     );
 };
 
-export default TestCard;
+export default ExperimentCard;
