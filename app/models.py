@@ -7,8 +7,8 @@ class Experiment(db.Model):
     description = db.Column(db.Text, nullable=False)
     report_path = db.Column(db.String(512), nullable=False)
     created_date = db.Column(db.Date, nullable=False)
-    who_created = db.Column(db.Text, db.ForeignKey('operator.operator_id'), nullable=False)
-    who_responsible = db.Column(db.Text, db.ForeignKey('operator.operator_id'), nullable=False)
+    who_created = db.Column(db.Integer, db.ForeignKey('operator.operator_id'), nullable=False)
+    who_responsible = db.Column(db.Integer, db.ForeignKey('operator.operator_id'), nullable=False)
 
     log_files = db.relationship('LogFile', backref='experiment', lazy=True)
     events = db.relationship('Event', backref='experiment', lazy=True)
@@ -49,7 +49,7 @@ class Operator(db.Model):
 
 class LogFile(db.Model):
     log_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.experiment_id'), nullable=False)
+    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.experiment_id'), nullable=True)
     file_path = db.Column(db.String(512), nullable=False)
     upload_time = db.Column(db.Date, nullable=False)
 
