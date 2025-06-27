@@ -8,7 +8,7 @@ import {
 import HomePage from './pages/HomePage';
 import FormsPage from './pages/FormsPage';
 import { useState, useEffect } from 'react';
-import { TestEntry } from './types/OtherTypes';
+import { TestEntry } from './types/PagesTypes';
 import './App.css';
 
 function App() {
@@ -27,7 +27,7 @@ function App() {
     const handleTestCreated = (newTest: TestEntry) => {
         const updatedTests = [...tests, newTest];
         setTests(updatedTests);
-        console.log('Перенаправление')
+        console.log('Перенаправление');
         navigate('/');
     };
     const handleDeleteTest = (id: string) => {

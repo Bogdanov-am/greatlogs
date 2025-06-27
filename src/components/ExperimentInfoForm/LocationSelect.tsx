@@ -1,7 +1,7 @@
 // components/LocationSelect.tsx
 import React from 'react';
 import SingleSelect from '../SingleSelect';
-import { SelectItem } from '../../types/ExperimentInfoFormTypes';
+import { SelectItem } from '../../types/ExperimentInfoTypes';
 
 interface LocationSelectProps {
     locations: SelectItem[];
@@ -19,13 +19,16 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
     loading = false,
     error = false,
 }) => {
+    const sortedLocations = [...locations].sort((a, b) =>
+        a.label.localeCompare(b.label, 'ru', { sensitivity: 'base' })
+    );
+
     return (
         <div className="location-select">
             <h5 style={{ color: error ? 'red' : '' }}>Выберите локацию</h5>
-            <div
-            >
+            <div>
                 <SingleSelect
-                    items={locations}
+                    items={sortedLocations}
                     selectedItem={selectedLocation}
                     onSelectionChange={onLocationChange}
                     loading={loading}

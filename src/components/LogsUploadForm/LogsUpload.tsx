@@ -38,12 +38,13 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
 
     const processFiles = (fileList: FileList) => {
         const newFiles: UploadFile[] = Array.from(fileList)
-            .filter((file) => file.name.endsWith(".tlog"))
+            .filter((file) => file.name.endsWith('.tlog'))
             .map((file) => ({
                 id: Math.random().toString(36).substring(2, 9),
                 name: file.name,
                 progress: 0,
-                status: "pending",
+                status: 'pending',
+                file: file, // Сохраняем объект File
             }));
 
         if (newFiles.length > 0) {
@@ -51,6 +52,7 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
             simulateUpload(newFiles);
         }
     };
+
 
     const simulateUpload = (filesToUpload: UploadFile[]) => {
         filesToUpload.forEach((file) => {

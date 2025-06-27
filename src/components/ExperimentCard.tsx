@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Card } from 'react-bootstrap';
-import { TestEntry } from '../types/OtherTypes';
+import { TestEntry } from '../types/PagesTypes';
 
 interface ExperimentCardProps extends TestEntry {
     onDelete: () => void;

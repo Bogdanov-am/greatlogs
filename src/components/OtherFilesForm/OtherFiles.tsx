@@ -174,7 +174,6 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
                         Создать запись
                     </Button>
                 </div>
-                ;
             </Card>
         </Container>
     );

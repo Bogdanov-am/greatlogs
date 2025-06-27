@@ -1,5 +1,3 @@
-import React from "react";
-
 export interface ExperimentInfoProps {
     data: {
         testDate: string;
@@ -21,6 +19,7 @@ export interface ExperimentInfoProps {
     onNext: () => void;
     shouldHighlightError: (fieldName: string, value: any) => boolean;
     markFieldAsTouched: (fieldName: string) => void;
+    touchedFields: Record<string, boolean>
 }
 
 export interface Operator extends SelectItem {
@@ -51,6 +50,7 @@ export interface ExperimentBaseFormProps {
     onChange: ExperimentInfoProps['onChange'];
     shouldHighlightError: (field: string, value: any) => boolean;
     markFieldAsTouched: (field: string) => void;
+    touchedFields: Record<string, boolean>
 }
 
 export interface OperatorFormProps {

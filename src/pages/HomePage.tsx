@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container, Button } from 'react-bootstrap';
 import TestCard from '../components/ExperimentCard';
-import { TestEntry } from '../types/OtherTypes';
+import { TestEntry } from '../types/PagesTypes';
 
 interface HomePageProps {
     tests: TestEntry[];

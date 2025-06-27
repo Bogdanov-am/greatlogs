@@ -5,10 +5,11 @@ import ExperimentInfo from '../components/ExperimentInfoForm/ExperimentInfo';
 import DevicesForm from '../components/DeviceInfoForm/DeviceInfo';
 import EventInfo from '../components/EventInfoForm/EventInfo';
 import OtherFiles from '../components/OtherFilesForm/OtherFiles';
-import { FormData, TestEntry } from '../types/OtherTypes';
-import { Operator, SelectItem } from '../types/ExperimentInfoFormTypes';
+import { CustomFormData, TestEntry } from '../types/PagesTypes';
+import { Operator, SelectItem } from '../types/ExperimentInfoTypes';
 import { UploadFile } from '../types/LogsUploadTypes';
 import { AdditionalFile } from '../types/OtherFilesTypes';
+import { fetchLogsUpload } from '../api'
 
 interface FormsPageProps {
     onSubmit: (test: TestEntry) => void;
@@ -17,7 +18,7 @@ interface FormsPageProps {
 
 const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
     const [currentStep, setCurrentStep] = useState<number>(1);
-    const [formData, setFormData] = useState<FormData>({
+    const [formData, setFormData] = useState<CustomFormData>({
         files: [],
         experiment: {
             testDate: '',
@@ -93,21 +94,6 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                 }
                 return true;
 
-            // case 3: // DeviceInfo
-            //     if (formData.devices.length === 0) return false;
-            //     const allDeviceInfoFields = formData.devices.every(
-            //         (device) =>
-            //             device.mavlinkSysId.trim() !== '' &&
-            //             device.deviceType.trim() !== '' &&
-            //             device.onboardVideos.length > 0 &&
-            //             device.parametersFiles.length > 0
-            //     );
-            //     if (!allDeviceInfoFields) {
-            //         alert('Заполните все требуемые поля');
-            //         return false;
-            //     }
-            //     return true;
-
             case 4: // EventsInfo
                 if (!formData.experiment.hasEvents) return true;
                 const allEventsInfoFields = formData.events.every(
@@ -160,8 +146,9 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
     };
 
     const shouldHighlightError = (fieldName: string, value: any): boolean => {
-        const isTouched = touchedFields[fieldName];
+        if (fieldName === 'experiment.operators') return false;
 
+        const isTouched = touchedFields[fieldName];
         if (!isTouched) return false;
 
         if (
@@ -178,9 +165,19 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
         return !value;
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
         const newTouched: Record<string, boolean> = {};
 
+        // if (currentStep === 1) {
+        //     try {
+        //         await uploadFilesToBackend(formData.files);
+        //         setCurrentStep((prev) => prev + 1);
+        //     } catch (error) {
+        //         alert('Ошибка закрузки файлов');
+        //         return;
+        //     }
+        // } НЕ УБИРАТЬ НИ В КОЕМ СЛУЧАЕ
+        
         if (currentStep === 2) {
             //ExperimentInfo
             const requiredFields = [
@@ -201,22 +198,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                 newTouched[`experiment.operators[${operator.id}].fullName`] =
                     true;
             });
-        }
-        // else if (currentStep === 3) {
-        //     // DeviceInfo
-        //     formData.devices.forEach((_, index) => {
-        //         [
-        //             'mavlinkSysId',
-        //             'serialNumber',
-        //             'deviceType',
-        //             'onboardVideos',
-        //             'parametersFiles',
-        //         ].forEach((field) => {
-        //             newTouched[`devices[${index}].${field}`] = true;
-        //         });
-        //     });
-        // }
-        else if (currentStep === 4) {
+        } else if (currentStep === 4) {
             // EventInfo
             formData.events.forEach((_, index) => {
                 ['time', 'description'].forEach((field) => {
@@ -291,18 +273,21 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
 
     const onFilesUploaded = useCallback((files: UploadFile[]) => {
         setFormData((prev) => ({ ...prev, files }));
-    }, [])
+    }, []);
 
-    const handleotherFilesChange = useCallback((newOtherFiles: {
-        screenshots: AdditionalFile[];
-        screenRecordings: (File | null)[];
-        additionalAttachments: (File | null)[];
-    }) => {
-        setFormData((prev) => ({
-            ...prev,
-            otherFiles: newOtherFiles,
-        }));
-    }, [])
+    const handleotherFilesChange = useCallback(
+        (newOtherFiles: {
+            screenshots: AdditionalFile[];
+            screenRecordings: (File | null)[];
+            additionalAttachments: (File | null)[];
+        }) => {
+            setFormData((prev) => ({
+                ...prev,
+                otherFiles: newOtherFiles,
+            }));
+        },
+        []
+    );
 
     return (
         <Container className="my-4" style={{ maxWidth: '800px' }}>
@@ -350,6 +335,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                     onNext={handleNext}
                     shouldHighlightError={shouldHighlightError}
                     markFieldAsTouched={markFieldAsTouched}
+                    touchedFields={touchedFields}
                 />
             ) : currentStep === 3 ? (
                 <DevicesForm

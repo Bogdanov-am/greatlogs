@@ -1,19 +1,20 @@
-import React from "react";
-import { Col, Form, Row } from "react-bootstrap";
+import React from 'react';
+import { Col, Form, Row } from 'react-bootstrap';
 import {
     ExperimentBaseFormProps,
     SelectItem,
-} from "../../types/ExperimentInfoFormTypes";
-import ExperimentOperators from "./ExperimentOperators";
-import ResponsibleOperator from "./ResponsibleOperator";
-import RecordCreator from "./CreatorSelect";
-import LocationSelect from "./LocationSelect";
+} from '../../types/ExperimentInfoTypes';
+import ExperimentOperators from './ExperimentOperators';
+import ResponsibleOperator from './ResponsibleOperator';
+import RecordCreator from './CreatorSelect';
+import LocationSelect from './LocationSelect';
 
 const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
     data,
     onChange,
     shouldHighlightError,
     markFieldAsTouched,
+    touchedFields,
 }) => {
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -37,7 +38,7 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
     const handleLocationChange = (location: SelectItem | null) => {
         onChange({
             ...data,
-            locations: location?.label || "",
+            locations: location?.label || '',
             selectedLocation: location,
         });
     };
@@ -67,8 +68,8 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
             operators: newOperators,
             responsibleOperator: responsibleStillValid
                 ? currentResponsible
-                // ? data.responsibleOperator
-                : null,
+                : // ? data.responsibleOperator
+                  null,
             recordCreator: creatorStillValid ? currentCreator : null,
             // recordCreator: creatorStillValid ? data.recordCreator : null,
         });
@@ -91,11 +92,11 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                     <h5
                         style={{
                             color: shouldHighlightError(
-                                "experiment.testDate",
+                                'experiment.testDate',
                                 data.testDate
                             )
-                                ? "red"
-                                : "",
+                                ? 'red'
+                                : '',
                         }}
                     >
                         Дата испытания
@@ -106,22 +107,21 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                     name="testDate"
                     value={data.testDate}
                     onChange={handleInputChange}
-                    onBlur={() => markFieldAsTouched("experiment.testDate")}
+                    onBlur={() => markFieldAsTouched('experiment.testDate')}
                     required
                 />
             </Form.Group>
-                    
-            
+
             <Form.Group className="mb-3">
                 <Form.Label>
                     <h5
                         style={{
                             color: shouldHighlightError(
-                                "experiment.description",
+                                'experiment.description',
                                 data.description
                             )
-                                ? "red"
-                                : "",
+                                ? 'red'
+                                : '',
                         }}
                     >
                         Описание испытания
@@ -133,7 +133,7 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                     name="description"
                     value={data.description}
                     onChange={handleInputChange}
-                    onBlur={() => markFieldAsTouched("experiment.description")}
+                    onBlur={() => markFieldAsTouched('experiment.description')}
                     placeholder="Опишите испытание"
                     required
                 />
@@ -149,10 +149,10 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                 onLocationChange={handleLocationChange}
                 loading={data.loadingLocations || false}
                 error={shouldHighlightError(
-                    "experiment.selectedLocation",
+                    'experiment.selectedLocation',
                     data.selectedLocation
                 )}
-                onBlur={() => markFieldAsTouched("experiment.selectedLocation")}
+                onBlur={() => markFieldAsTouched('experiment.selectedLocation')}
             />
 
             <Row className="mt-3 align-items-stretch">
@@ -162,12 +162,10 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                         selectedOperators={data.operators || []}
                         onOperatorsChange={handleOperatorsChange}
                         loading={data.loadingOperators || false}
-                        error={shouldHighlightError(
-                            "experiment.operators",
-                            data.operators?.length > 0 ? data.operators : null
-                        )}
+                        required={true}
+                        initialTouched={touchedFields['experiment.operators']}
                         onBlur={() =>
-                            markFieldAsTouched("experiment.operators")
+                            markFieldAsTouched('experiment.operators')
                         }
                     />
                 </Col>
@@ -179,11 +177,11 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                         onOperatorChange={handleResponsibleChange}
                         loading={data.loadingOperators || false}
                         error={shouldHighlightError(
-                            "experiment.responsibleOperator",
+                            'experiment.responsibleOperator',
                             data.responsibleOperator
                         )}
                         onBlur={() =>
-                            markFieldAsTouched("experiment.responsibleOperator")
+                            markFieldAsTouched('experiment.responsibleOperator')
                         }
                     />
                 </Col>
@@ -195,11 +193,11 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                         onCreatorChange={handleCreatorChange}
                         loading={data.loadingOperators || false}
                         error={shouldHighlightError(
-                            "experiment.recordCreator",
+                            'experiment.recordCreator',
                             data.recordCreator
                         )}
                         onBlur={() =>
-                            markFieldAsTouched("experiment.recordCreator")
+                            markFieldAsTouched('experiment.recordCreator')
                         }
                     />
                 </Col>
@@ -210,11 +208,11 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                     <h5
                         style={{
                             color: shouldHighlightError(
-                                "experiment.reportFile",
+                                'experiment.reportFile',
                                 data.reportFile
                             )
-                                ? "red"
-                                : "",
+                                ? 'red'
+                                : '',
                         }}
                     >
                         Отчет
@@ -223,7 +221,7 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                 <Form.Control
                     type="file"
                     onChange={handleFileChange}
-                    onBlur={() => markFieldAsTouched("experiment.reportFile")}
+                    onBlur={() => markFieldAsTouched('experiment.reportFile')}
                     required
                 />
                 {data.reportFile && (

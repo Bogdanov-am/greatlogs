@@ -1,8 +1,8 @@
-import { OtherFilesData } from '../types/OtherFilesTypes'
-import { Event } from '../types/EventInfoTypes'
-import { Device } from '../types/DeviceInfoTypes'
-import { UploadFile } from '../types/LogsUploadTypes'
-import { SelectItem, Operator } from '../types/ExperimentInfoFormTypes'
+import { OtherFilesData } from './OtherFilesTypes'
+import { Event } from './EventInfoTypes'
+import { Device } from './DeviceInfoTypes'
+import { UploadFile } from './LogsUploadTypes'
+import { SelectItem, Operator } from './ExperimentInfoTypes'
 
 export interface TestEntry {
     id: string;
@@ -18,7 +18,7 @@ export interface ActionButtonsProps {
     onNext: () => void;
 }
 
-export interface FormData {
+export interface CustomFormData {
     files: UploadFile[];
     experiment: {
         testDate: string;

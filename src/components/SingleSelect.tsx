@@ -1,9 +1,6 @@
 import React from 'react';
 import { Form, ListGroup } from 'react-bootstrap';
-import {
-    SingleSelectProps,
-    SelectItem,
-} from '../types/ExperimentInfoFormTypes';
+import { SingleSelectProps, SelectItem } from '../types/ExperimentInfoTypes';
 
 const SingleSelect: React.FC<SingleSelectProps & { name?: string }> = ({
     items,
@@ -21,15 +18,10 @@ const SingleSelect: React.FC<SingleSelectProps & { name?: string }> = ({
     }
 
     return (
-        <div
-            className="single-select"
-        >
+        <div className="single-select">
             <ListGroup>
                 {items.map((item) => (
-                    <ListGroup.Item
-                        key={item.id}
-                        action
-                    >
+                    <ListGroup.Item key={item.id} action>
                         <Form.Check
                             type="radio"
                             id={`${name}-${item.id}`}

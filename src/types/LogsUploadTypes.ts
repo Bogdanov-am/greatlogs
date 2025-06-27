@@ -3,6 +3,7 @@ export interface UploadFile {
    name: string;
    progress: number;
    status: 'pending' | 'uploading' | 'completed' | 'error';
+   file: File;
 }
 
 export interface LogsUploadProps {
