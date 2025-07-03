@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Container, Spinner } from 'react-bootstrap';
-import { Device, DeviceType } from '../../types/DeviceInfoTypes';
+import { Card, Container, Spinner, Button } from 'react-bootstrap';
+import { Device } from '../../types/DeviceInfoTypes';
 import DeviceItem from './DeviceItem';
-import ActionButtons from '../ActionButtons';
+import { getMavlinkSysIds, saveDevicesInfo } from '../../api'; // Добавляем новый метод API
 
 interface DevicesFormProps {
     devices: Device[];
@@ -14,51 +14,25 @@ interface DevicesFormProps {
     validateStep: () => boolean;
 }
 
-// Функция для симуляции запроса к серверу для получения списка устройств
-const fetchDevices = async (): Promise<Device[]> => {
-    // Имитация задержки сети
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Возвращаем примерные данные
-    return [
-        {
-            mavlinkSysId: 'SYS_001',
-            deviceType: DeviceType.ORKAN,
-            onboardVideos: [],
-            parametersFiles: [],
-        },
-        {
-            mavlinkSysId: 'SYS_002',
-            deviceType: DeviceType.ORKAN,
-            onboardVideos: [],
-            parametersFiles: [],
-        },
-        {
-            mavlinkSysId: 'SYS_003',
-            deviceType: DeviceType.ORKAN,
-            onboardVideos: [],
-            parametersFiles: [],
-        },
-    ];
-};
-
-const DevicesForm: React.FC<DevicesFormProps> = ({
+const DevicesInfo: React.FC<DevicesFormProps> = ({
     devices,
     onChange,
     onBack,
     onNext,
     shouldHighlightError,
     markFieldAsTouched,
+    validateStep,
 }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false); // Состояние отправки
 
-    // Загрузка данных при монтировании компонента
     useEffect(() => {
         const loadDevices = async () => {
             try {
                 setLoading(true);
-                const devicesData = await fetchDevices();
+                const devicesData = await getMavlinkSysIds();
+                console.log(devicesData);
                 onChange(devicesData);
                 setError(null);
             } catch (err) {
@@ -69,7 +43,6 @@ const DevicesForm: React.FC<DevicesFormProps> = ({
             }
         };
 
-        // Загружаем только если devices пуст (первый рендер)
         if (devices.length === 0) {
             loadDevices();
         } else {
@@ -81,6 +54,39 @@ const DevicesForm: React.FC<DevicesFormProps> = ({
         const newDevices = [...devices];
         newDevices[index] = device;
         onChange(newDevices);
+    };
+
+    const handleNextWithSave = async () => {
+        setIsSubmitting(true);
+
+        try {
+            // Помечаем все поля как "тронутые" для валидации
+            devices.forEach((_, deviceIndex) => {
+                markFieldAsTouched(`devices[${deviceIndex}].deviceType`);
+                markFieldAsTouched(`devices[${deviceIndex}].onboardVideos`);
+                markFieldAsTouched(`devices[${deviceIndex}].parametersFiles`);
+            });
+
+            // Проверяем валидность данных
+            if (!validateStep()) {
+                throw new Error(
+                    'Заполните все обязательные поля для каждого устройства'
+                );
+            }
+
+            // Сохраняем данные устройств
+            await saveDevicesInfo(devices);
+            onNext();
+        } catch (error) {
+            console.error('Ошибка сохранения:', error);
+            alert(
+                error instanceof Error
+                    ? error.message
+                    : 'Ошибка сохранения устройств'
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (loading) {
@@ -96,12 +102,21 @@ const DevicesForm: React.FC<DevicesFormProps> = ({
         return (
             <Container className="text-center my-4">
                 <div className="alert alert-danger">{error}</div>
-                <button
-                    className="btn btn-primary"
-                    onClick={() => window.location.reload()}
-                >
-                    Повторить попытку
-                </button>
+                <div className="d-flex justify-content-between">
+                    <Button
+                        variant="outline-secondary"
+                        onClick={onBack}
+                        disabled={isSubmitting}
+                    >
+                        Назад
+                    </Button>
+                    <Button
+                        className="btn btn-primary"
+                        onClick={() => window.location.reload()}
+                    >
+                        Повторить попытку
+                    </Button>
+                </div>
             </Container>
         );
     }
@@ -123,10 +138,38 @@ const DevicesForm: React.FC<DevicesFormProps> = ({
                         />
                     ))}
                 </div>
-                <ActionButtons onBack={onBack} onNext={onNext} />
+                <div className="d-flex justify-content-between">
+                    <Button
+                        variant="secondary"
+                        onClick={onBack}
+                        disabled={isSubmitting}
+                    >
+                        Назад
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={handleNextWithSave}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                                <span className="ms-2">Сохранение...</span>
+                            </>
+                        ) : (
+                            'Далее'
+                        )}
+                    </Button>
+                </div>
             </Card>
         </Container>
     );
 };
 
-export default DevicesForm;
+export default DevicesInfo;

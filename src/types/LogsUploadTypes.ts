@@ -1,13 +1,20 @@
-export interface UploadFile {
+export interface StoredUploadFile {
    id: string;
    name: string;
    progress: number;
    status: 'pending' | 'uploading' | 'completed' | 'error';
+   // file: File;
+}
+
+export interface UploadingFile extends StoredUploadFile {
    file: File;
 }
 
+export type UploadFile = StoredUploadFile | UploadingFile
+
 export interface LogsUploadProps {
    onNext: () => void;
+   onBack: () => void;
    onFilesUploaded: (files: UploadFile[]) => void;
    uploadedFiles: UploadFile[];
 }
@@ -25,6 +32,7 @@ export interface FileDropZoneProps {
 }
 
 export interface ActionButtonsProps {
+   onBack: () => void;
    onCancel: () => void;
    onNext: () => void;
    isNextDisabled: boolean;

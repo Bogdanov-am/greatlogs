@@ -1,37 +1,31 @@
-import { UploadFile } from './types/LogsUploadTypes';
-import { SelectItem } from './types/ExperimentInfoTypes'
-const API_BASE_URL = 'http://127.0.0.1:5000';
+import { UploadingFile } from './types/LogsUploadTypes';
+import { SelectItem } from './types/ExperimentInfoTypes';
+import { Device, DeviceType } from './types/DeviceInfoTypes';
+import { Event } from './types/EventInfoTypes';
 
-export const fetchLogsUpload = async (files: UploadFile[]) => {
-    try {
-        const formData = new FormData();
-        files.forEach((file) => {
-            // Предполагается, что file содержит объект File (из input type="file")
-            if (file.file) {
-                // Добавьте поле file в интерфейс UploadFile, если его нет
-                formData.append('tlog_files', file.file);
-            }
-        });
+const API_BASE_URL = 'http://10.200.10.214:5000';
 
-        const response = await fetch(`${API_BASE_URL}/logs`, {
-            method: 'POST',
-            body: formData,
-        });
-
-        if (!response.ok) {
-            throw new Error('Ошибка при загрузке файлов');
+export const postLogsUpload = async (files: UploadingFile[]) => {
+    const formData = new FormData();
+    files.forEach((file) => {
+        if (file.file) {
+            formData.append('file', file.file);
         }
+    });
 
-        const result = await response.json();
-        console.log('Файлы успешно загружены:', result);
-        return result;
-    } catch (error) {
-        console.error('Ошибка:', error);
-        throw error;
+    const response = await fetch(`${API_BASE_URL}/logs`, {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error('Ошибка при загрузке файлов');
     }
+
+    return await response.json();
 };
 
-export const fetchLocations = async (): Promise<SelectItem[]> => {
+export const getLocations = async (): Promise<SelectItem[]> => {
     try {
         const response = await fetch(`${API_BASE_URL}/locations`);
         if (!response.ok) {
@@ -39,8 +33,8 @@ export const fetchLocations = async (): Promise<SelectItem[]> => {
         }
         const data = await response.json();
         return data.map((item: any) => ({
-            id: item.id,
-            label: item.name // или другое поле, в зависимости от структуры ответа
+            id: item.location_id,
+            label: item.location_name, // или другое поле, в зависимости от структуры ответа
         }));
     } catch (error) {
         console.error('Error fetching locations:', error);
@@ -48,19 +42,230 @@ export const fetchLocations = async (): Promise<SelectItem[]> => {
     }
 };
 
-export const fetchOperators = async (): Promise<SelectItem[]> => {
+
+
+export const getOperators = async (): Promise<SelectItem[]> => {
     try {
         const response = await fetch(`${API_BASE_URL}/operators`);
         if (!response.ok) {
-            throw new Error('Failed to fetch operators');
+            throw new Error(`Failed to fetch operators: ${response.status} ${response.statusText}`);
         }
+        
         const data = await response.json();
-        return data.map((item: any) => ({
-            id: item.id,
-            label: `${item.last_name} ${item.first_name[0]}.${item.middle_name ? ` ${item.middle_name[0]}.` : ''}`
-        }));
+        
+        // Валидация структуры ответа
+        if (!Array.isArray(data)) {
+            throw new Error('Invalid operators data format: expected array');
+        }
+
+        // Обработка и проверка данных
+        const operators: SelectItem[] = [];
+        const idSet = new Set();
+
+        for (const item of data) {
+            // Проверка обязательных полей
+            if (!item.operator_id && !item.operators_id) {
+                console.warn('Operator missing ID field:', item);
+                continue;
+            }
+            
+            const id = item.operator_id || item.operators_id;
+            const name = item.operator_name || 'Unknown';
+            
+            // Проверка на дубликаты
+            if (idSet.has(id)) {
+                console.warn(`Duplicate operator ID: ${id}`, item);
+                continue;
+            }
+            
+            idSet.add(id);
+            operators.push({
+                id,
+                label: name,
+            });
+        }
+
+        if (operators.length === 0) {
+            console.warn('No valid operators found in response');
+        }
+
+        return operators;
     } catch (error) {
         console.error('Error fetching operators:', error);
         throw error;
     }
 };
+
+
+
+export const saveExperimentInfo = async (data: {
+    experimentDate: string;
+    description: string;
+    reportFile: File | null;
+    responsibleOperator: SelectItem | null;
+    recordCreator: SelectItem | null;
+}) => {
+
+    const errors = [];
+    if (!data.reportFile) errors.push('Файл отчёта');
+    if (!data.recordCreator?.id) errors.push('Создатель записи');
+    if (!data.responsibleOperator?.id) errors.push('Ответственный оператор');
+    if (!data.description?.trim()) errors.push('Описание');
+    if (!data.experimentDate) errors.push('Дата эксперимента');
+    
+    if (errors.length > 0) {
+        throw new Error(`Заполните обязательные поля: ${errors.join(', ')}`);
+    }
+
+    const formData = new FormData();
+
+    formData.append('file', data.reportFile!);
+    formData.append('creator', data.recordCreator!.id.toString());
+    formData.append('responsible', data.responsibleOperator!.id.toString());
+    formData.append('description', data.description);
+    formData.append('created_date', data.experimentDate);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/experiments`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Полный ответ сервера:', errorText);
+            throw new Error(errorText || 'Неизвестная ошибка сервера');            
+        }
+        console.log('Успех');
+        return await response.json();
+    } catch (error) {
+        console.error('Полная ошибка API:', error);
+        throw error;
+    }
+};
+
+
+export const getMavlinkSysIds = async (): Promise<Device[]> => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/devices`);
+
+        if (!response.ok) {
+            throw new Error('Ошибка получения данных устройств');
+        }        
+        const data = await response.json();
+        
+        // Проверка на undefined и корректную структуру
+        if (!data?.mavlink_system_id || !Array.isArray(data.mavlink_system_id)) {
+            console.error('Неверный формат данных:', data);
+            return []; // Возвращаем пустой массив вместо ошибки
+        }
+        
+        return data.mavlink_system_id.map((sys_id: number) => ({
+            mavlinkSysId: sys_id.toString(),
+            deviceType: DeviceType.ORKAN,
+            onboardVideos: [],
+            parametersFiles: [],
+        }));
+    } catch (error) {
+        console.error('Ошибка API:', error);
+        return []; // Возвращаем пустой массив вместо throw
+    }
+};
+
+
+
+
+export const saveDevicesInfo = async (devices: Device[]) => {
+    try {
+        // Сначала сохраняем основные данные устройств
+        const deviceResponses = await Promise.all(
+            devices.map(async (device) => {
+                // 1. Сохраняем основную информацию об устройстве
+                const deviceResponse = await fetch(`${API_BASE_URL}/devices`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        device_type: device.deviceType,
+                        mavlink_system_id: device.mavlinkSysId
+                    }),
+                });
+
+                if (!deviceResponse.ok) {
+                    throw new Error('Ошибка сохранения устройства');
+                }
+
+                const deviceData = await deviceResponse.json();
+                const deviceId = deviceData.device_id;
+
+                // 2. Сохраняем видеофайлы (если есть)
+                if (device.onboardVideos.length > 0) {
+                    const videoFormData = new FormData();
+                    device.onboardVideos.forEach(file => {
+                        videoFormData.append('file', file);
+                    });
+
+                    const videoResponse = await fetch(`${API_BASE_URL}/device-records`, {
+                        method: 'POST',
+                        body: videoFormData,
+                    });
+
+                    if (!videoResponse.ok) {
+                        throw new Error('Ошибка сохранения видео');
+                    }
+                }
+
+                // 3. Сохраняем файлы параметров (если есть)
+                if (device.parametersFiles.length > 0) {
+                    const paramsFormData = new FormData();
+                    device.parametersFiles.forEach(file => {
+                        paramsFormData.append('file', file);
+                    });
+
+                    const paramsResponse = await fetch(`${API_BASE_URL}/device-parameters`, {
+                        method: 'POST',
+                        body: paramsFormData,
+                    });
+
+                    if (!paramsResponse.ok) {
+                        throw new Error('Ошибка сохранения параметров');
+                    }
+                }
+
+                return deviceData;
+            })
+        );
+
+        return deviceResponses;
+    } catch (error) {
+        console.error('Ошибка сохранения устройств:', error);
+        throw error;
+    }
+};
+
+
+
+
+export const saveEventInfo = async (events: Event[]) => {
+    const formData = new FormData();
+
+    events.forEach((event, eventIndex) => {
+        formData.append(`events[${eventIndex}][description]`, event.description);
+        formData.append(`events[${eventIndex}][time]`, event.time);
+
+        event.deviceIds.forEach((deviceId, deviceIndex) => {
+            formData.append(`events[${eventIndex}][deviceIds][${deviceIndex}]`, deviceId);
+        });
+    });
+
+    const response = await fetch('/events', {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error('Ошибка сохранения событий');
+    }
+}
+

@@ -21,15 +21,29 @@ const SingleSelect: React.FC<SingleSelectProps & { name?: string }> = ({
         <div className="single-select">
             <ListGroup>
                 {items.map((item) => (
-                    <ListGroup.Item key={item.id} action>
+                    <ListGroup.Item
+                        key={item.id}
+                        onClick={() => handleSelect(item)}
+                        style={{
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '0.75rem 1.25rem',
+                            userSelect: 'none',
+                        }}
+                    >
                         <Form.Check
                             type="radio"
                             id={`${name}-${item.id}`}
                             name={name}
-                            label={item.label}
                             checked={selectedItem?.id === item.id}
-                            onChange={() => handleSelect(item)}
+                            onChange={() => {}}
+                            onClick={(e) => e.stopPropagation()}
+                            className="me-2"
+                            style={{ pointerEvents: 'none' }}
+                            label="" // Убираем дублирующийся текст
                         />
+                        {item.label}
                     </ListGroup.Item>
                 ))}
             </ListGroup>

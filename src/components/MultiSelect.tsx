@@ -17,24 +17,45 @@ const CustomDropdownMenu = React.forwardRef(
                 }}
                 className={className}
                 aria-labelledby={labeledBy}
+                onClick={(e) => e.stopPropagation()}
             >
                 <div className="px-2 py-1">
-                    {React.Children.toArray(children)}
+                    {React.Children.map(children, (child, index) =>
+                        React.cloneElement(child, {
+                            key: child.key || `dropdown-item-${index}`,
+                        })
+                    )}
                 </div>
             </div>
         );
     }
 );
 
-const CustomDropdownItem = ({ children, onClick, ...props }: any) => {
-    const handleClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (onClick) onClick(e);
-    };
 
+const CustomDropdownItem = ({
+    children,
+    isSelected,
+    onClick,
+    ...props
+}: any) => {
     return (
-        <div {...props} onClick={handleClick}>
+        <div
+            {...props}
+            onClick={(e) => {
+                e.preventDefault();
+                onClick(e);
+            }}
+            className={`d-flex align-items-center px-3 py-2 ${
+                isSelected ? 'bg-light' : ''
+            }`}
+            style={{
+                cursor: 'pointer',
+                height: '40px',
+                width: '100%',
+                userSelect: 'none',
+                transition: 'background-color 0.2s',
+            }}
+        >
             {children}
         </div>
     );
@@ -50,14 +71,10 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
     const menuStyle: React.CSSProperties = {
         maxHeight: `${Math.min(items.length, 4) * 40}px`,
-        overflowY:
-            items.length > 4
-                ? 'auto'
-                : ('hidden' as React.CSSProperties['overflowY']),
+        overflowY: items.length > 4 ? 'auto' : 'hidden',
     };
 
-    const handleSelect = (item: SelectItem, e: React.MouseEvent) => {
-        e.stopPropagation();
+    const handleSelect = (item: SelectItem) => {
         const isSelected = selectedItems.some(
             (selected) => selected.id === item.id
         );
@@ -75,7 +92,11 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     }
 
     return (
-        <Dropdown show={isOpen} onToggle={(isOpen) => setIsOpen(isOpen)}>
+        <Dropdown
+            show={isOpen}
+            onToggle={(isOpen) => setIsOpen(isOpen)}
+            autoClose="outside" // Добавлено это
+        >
             <Dropdown.Toggle
                 variant="outline-secondary"
                 className="w-100"
@@ -94,27 +115,34 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                 as={CustomDropdownMenu}
                 style={menuStyle}
                 className="w-100 p-0"
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
-                {items.map((item) => (
-                    <Dropdown.Item
-                        key={item.id}
-                        as={CustomDropdownItem}
-                        className="px-3 py-2"
-                        style={{ height: '40px' }}
-                        onClick={(e: React.MouseEvent) => handleSelect(item, e)}
-                    >
-                        <Form.Check
-                            type="checkbox"
-                            id={`multi-select-${item.id}`}
-                            label={item.label}
-                            checked={selectedItems.some(
-                                (selected) => selected.id === item.id
-                            )}
-                            onChange={() => {}}
-                        />
-                    </Dropdown.Item>
-                ))}
+                {items.map((item) => {
+                    const isSelected = selectedItems.some(
+                        (selected) => selected.id === item.id
+                    );
+                    return (
+                        <Dropdown.Item
+                            key={`${item.id} - ${item.label}`}
+                            as={CustomDropdownItem}
+                            isSelected={isSelected}
+                            onClick={(e: React.MouseEvent) => {
+                                handleSelect(item);
+                            }}
+                        >
+                            <Form.Check
+                                type="checkbox"
+                                id={`multi-select-${item.id}-${Date.now()}`}
+                                label={item.label}
+                                checked={isSelected}
+                                onChange={() => {}}
+                                onClick={(e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    handleSelect(item);
+                                }}
+                            />
+                        </Dropdown.Item>
+                    );
+                })}
             </Dropdown.Menu>
         </Dropdown>
     );

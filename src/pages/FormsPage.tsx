@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Container } from 'react-bootstrap';
 import LogsUpload from '../components/LogsUploadForm/LogsUpload';
 import ExperimentInfo from '../components/ExperimentInfoForm/ExperimentInfo';
@@ -7,9 +7,10 @@ import EventInfo from '../components/EventInfoForm/EventInfo';
 import OtherFiles from '../components/OtherFilesForm/OtherFiles';
 import { CustomFormData, TestEntry } from '../types/PagesTypes';
 import { Operator, SelectItem } from '../types/ExperimentInfoTypes';
-import { UploadFile } from '../types/LogsUploadTypes';
+import { StoredUploadFile } from '../types/LogsUploadTypes';
 import { AdditionalFile } from '../types/OtherFilesTypes';
-import { fetchLogsUpload } from '../api'
+import { usePersistForm } from '../hooks/usePresistForm';
+import { checkStorageLimit } from '../utils/storage';
 
 interface FormsPageProps {
     onSubmit: (test: TestEntry) => void;
@@ -18,52 +19,65 @@ interface FormsPageProps {
 
 const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
     const [currentStep, setCurrentStep] = useState<number>(1);
-    const [formData, setFormData] = useState<CustomFormData>({
-        files: [],
-        experiment: {
-            testDate: '',
-            locations: '',
-            description: '',
-            hasEvents: false,
-            reportFile: null,
-            operators: [],
-            availableLocations: [],
-            availableOperators: [],
-            responsibleOperator: null,
-            recordCreator: null,
-            selectedLocation: null,
-            loadingLocations: true,
-            loadingOperators: true,
-        },
-        devices: [],
-        events: [
-            {
-                time: '',
+    const [formData, setFormData] = usePersistForm<CustomFormData>(
+        'experimentForm',
+        {
+            files: [],
+            experiment: {
+                experimentDate: '',
+                locations: '',
                 description: '',
-                deviceIds: [],
+                hasEvents: false,
+                reportFile: null,
+                operators: [],
+                availableLocations: [],
+                availableOperators: [],
+                responsibleOperator: null,
+                recordCreator: null,
+                selectedLocation: null,
+                loadingLocations: true,
+                loadingOperators: true,
             },
-        ],
-        otherFiles: {
-            screenshots: [],
-            screenRecordings: [],
-            additionalAttachments: [],
-        },
-    });
+            devices: [],
+            events: [
+                {
+                    time: '',
+                    description: '',
+                    deviceIds: [],
+                },
+            ],
+            otherFiles: {
+                screenshots: [],
+                screenRecordings: [],
+                additionalAttachments: [],
+            },
+        }
+    );
+
     const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>(
         {}
     );
 
+    useEffect(() => {
+        const handler = (e: StorageEvent) => {
+            if (e.key === 'experimentForm' && e.newValue) {
+                try {
+                    setFormData(JSON.parse(e.newValue));
+                } catch (error) {
+                    console.error('Ошибка синхронизации', error);
+                }
+            }
+        };
+        window.addEventListener('storage', handler);
+        return () => window.removeEventListener('storage', handler);
+    });
+
+
     const validateStep = (step: number): boolean => {
         switch (step) {
-            case 1: // LogsUpload
-                return (
-                    formData.files.length > 0 &&
-                    formData.files.every((f) => f.progress === 100)
-                );
-
-            case 2: // ExperimentInfo
+            case 1: // ExperimentInfo
                 const {
-                    testDate,
+                    experimentDate,
                     selectedLocation,
                     description,
                     reportFile,
@@ -78,7 +92,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                 const hasLocation = selectedLocation !== null;
                 const hasOperators = operators.length > 0;
                 const allTextFilelds =
-                    testDate.trim() !== '' && description.trim() !== '';
+                    experimentDate.trim() !== '' && description.trim() !== '';
 
                 const allRequiredFieldsFilled =
                     hasRecordCreator &&
@@ -93,6 +107,12 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                     return false;
                 }
                 return true;
+
+            case 2: // LogsUpload
+                return (
+                    formData.files.length > 0 &&
+                    formData.files.every((f) => f.progress === 100)
+                );
 
             case 4: // EventsInfo
                 if (!formData.experiment.hasEvents) return true;
@@ -146,10 +166,12 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
     };
 
     const shouldHighlightError = (fieldName: string, value: any): boolean => {
-        if (fieldName === 'experiment.operators') return false;
-
         const isTouched = touchedFields[fieldName];
         if (!isTouched) return false;
+
+        if (fieldName === 'experiment.operators') {
+            return Array.isArray(value) ? value.length === 0 : true;
+        }
 
         if (
             fieldName.includes('onboardVideos') ||
@@ -168,55 +190,54 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
     const handleNext = async () => {
         const newTouched: Record<string, boolean> = {};
 
-        // if (currentStep === 1) {
-        //     try {
-        //         await uploadFilesToBackend(formData.files);
-        //         setCurrentStep((prev) => prev + 1);
-        //     } catch (error) {
-        //         alert('Ошибка закрузки файлов');
-        //         return;
-        //     }
-        // } НЕ УБИРАТЬ НИ В КОЕМ СЛУЧАЕ
-        
-        if (currentStep === 2) {
-            //ExperimentInfo
-            const requiredFields = [
-                'testDate',
-                'selectedLocation',
-                'description',
-                'reportFile',
-                'operators',
-                'responsibleOperator',
-                'recordCreator',
-            ];
+        if (currentStep === 1) {
+            try {
+                const {
+                    experimentDate,
+                    description,
+                    reportFile,
+                    responsibleOperator,
+                    recordCreator,
+                } = formData.experiment;
 
-            requiredFields.forEach((field) => {
-                newTouched[`experiment.${field}`] = true;
-            });
+                if (!reportFile || !responsibleOperator || !recordCreator) {
+                    alert('Пожалуйста заполните все поля');
+                    return;
+                }
 
-            formData.experiment.operators.forEach((operator) => {
-                newTouched[`experiment.operators[${operator.id}].fullName`] =
-                    true;
-            });
-        } else if (currentStep === 4) {
-            // EventInfo
-            formData.events.forEach((_, index) => {
-                ['time', 'description'].forEach((field) => {
-                    newTouched[`events[${index}].${field}`] = true;
-                });
-            });
-        }
+                setCurrentStep((prev) => prev + 1);
+            } catch (error) {
+                console.error('Error saving experiment:', error);
+                let errorMessage = 'Failed to save experiment data';
+                if (error instanceof Error) {
+                    errorMessage = error.message;
+                } else if (typeof error === 'string') {
+                    errorMessage = error;
+                }
+                alert(errorMessage);
+            }
 
-        setTouchedFields((prev) => ({ ...prev, ...newTouched }));
-
-        if (!validateStep(currentStep)) {
-            return;
-        }
-
-        if (currentStep === 3 && !formData.experiment.hasEvents) {
-            setCurrentStep((prev) => prev + 2);
         } else {
-            setCurrentStep((prev) => prev + 1);
+            if (currentStep === 4) {
+                // EventInfo
+                formData.events.forEach((_, index) => {
+                    ['time', 'description'].forEach((field) => {
+                        newTouched[`events[${index}].${field}`] = true;
+                    });
+                });
+            }
+
+            setTouchedFields((prev) => ({ ...prev, ...newTouched }));
+
+            if (!validateStep(currentStep)) {
+                return;
+            }
+
+            if (currentStep === 3 && !formData.experiment.hasEvents) {
+                setCurrentStep((prev) => prev + 2);
+            } else {
+                setCurrentStep((prev) => prev + 1);
+            }
         }
     };
 
@@ -245,7 +266,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
         const newTest: TestEntry = {
             id: Date.now().toString(),
             creationDate: new Date().toLocaleDateString('ru-RU'),
-            testDate: formData.experiment.testDate,
+            testDate: formData.experiment.experimentDate,
             description: formData.experiment.description,
             location: formData.experiment.selectedLocation?.label || '',
             equipment: formData.devices
@@ -255,7 +276,13 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                 .join(', '),
         };
 
+        if (!checkStorageLimit(formData)) {
+            alert('Данные слишком велики');
+            return;
+        }
+
         onSubmit(newTest); // Передаем данные в App
+        localStorage.removeItem('experimentForm');
         onCancel();
     };
 
@@ -271,7 +298,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
         });
     };
 
-    const onFilesUploaded = useCallback((files: UploadFile[]) => {
+    const onFilesUploaded = useCallback((files: StoredUploadFile[]) => {
         setFormData((prev) => ({ ...prev, files }));
     }, []);
 
@@ -292,13 +319,6 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
     return (
         <Container className="my-4" style={{ maxWidth: '800px' }}>
             {currentStep === 1 ? (
-                <LogsUpload
-                    onNext={handleNext}
-                    onFilesUploaded={onFilesUploaded}
-                    uploadedFiles={formData.files}
-                />
-            ) : // В разделе return компонента FormsPage замените текущий закомментированный блок на:
-            currentStep === 2 ? (
                 <ExperimentInfo
                     data={{
                         ...formData.experiment,
@@ -308,7 +328,6 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                                 label: op.fullName,
                             })
                         ),
-                        // Удаляем locations: [], так как больше не используется
                     }}
                     onChange={(experimentData) => {
                         setFormData((prev) => ({
@@ -331,11 +350,19 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                             },
                         }));
                     }}
-                    onBack={() => setCurrentStep(1)}
+                    // onBack={() => setCurrentStep(1)}
                     onNext={handleNext}
                     shouldHighlightError={shouldHighlightError}
                     markFieldAsTouched={markFieldAsTouched}
                     touchedFields={touchedFields}
+                />
+            ) : // В разделе return компонента FormsPage замените текущий закомментированный блок на:
+            currentStep === 2 ? (
+                <LogsUpload
+                    onBack={() => setCurrentStep(1)}
+                    onNext={handleNext}
+                    onFilesUploaded={onFilesUploaded}
+                    uploadedFiles={formData.files}
                 />
             ) : currentStep === 3 ? (
                 <DevicesForm

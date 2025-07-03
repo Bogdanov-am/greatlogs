@@ -92,8 +92,8 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                     <h5
                         style={{
                             color: shouldHighlightError(
-                                'experiment.testDate',
-                                data.testDate
+                                'experiment.experimentDate',
+                                data.experimentDate
                             )
                                 ? 'red'
                                 : '',
@@ -104,10 +104,12 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                 </Form.Label>
                 <Form.Control
                     type="date"
-                    name="testDate"
-                    value={data.testDate}
+                    name="experimentDate"
+                    value={data.experimentDate}
                     onChange={handleInputChange}
-                    onBlur={() => markFieldAsTouched('experiment.testDate')}
+                    onBlur={() =>
+                        markFieldAsTouched('experiment.experimentDate')
+                    }
                     required
                 />
             </Form.Group>

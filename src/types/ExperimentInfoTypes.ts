@@ -1,6 +1,6 @@
 export interface ExperimentInfoProps {
     data: {
-        testDate: string;
+        experimentDate: string;
         locations: string;
         description: string;
         hasEvents: boolean;
@@ -15,7 +15,7 @@ export interface ExperimentInfoProps {
         loadingOperators?: boolean;
     };
     onChange: (data: any) => void;
-    onBack: () => void;
+    // onBack: () => void;
     onNext: () => void;
     shouldHighlightError: (fieldName: string, value: any) => boolean;
     markFieldAsTouched: (fieldName: string) => void;

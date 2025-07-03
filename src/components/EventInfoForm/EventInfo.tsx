@@ -1,8 +1,9 @@
-import React from 'react';
-import { Button, Card, Container } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Button, Card, Container, Spinner } from 'react-bootstrap';
 import { Event, EventInfoProps } from '../../types/EventInfoTypes';
 import EventItem from './EventItem';
 import ActionButtons from "../ActionButtons";
+import { saveEventInfo } from '../../api';
 
 const EventInfo: React.FC<EventInfoProps> = ({
     events,
@@ -12,7 +13,10 @@ const EventInfo: React.FC<EventInfoProps> = ({
     onNext,
     shouldHighlightError,
     markFieldAsTouched,
+    validateStep,
 }) => {
+    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const addEvent = () => {
         const newEvent: Event = {
             time: '',
@@ -52,6 +56,34 @@ const EventInfo: React.FC<EventInfoProps> = ({
         onChange(updatedEvents);
     };
 
+    const handleNextWithSave = async () => {
+        setIsSubmitting(true)
+        try {
+            events.forEach((_, eventIndex) => {
+                markFieldAsTouched(`events[${eventIndex}].description`);
+                markFieldAsTouched(`events[${eventIndex}].time`);
+            });
+
+            if (!validateStep()) {
+                throw new Error(
+                    'Заполните все обязательные поля для каждого добавленного события'
+                );
+            }
+
+            await saveEventInfo(events);
+            onNext();
+        } catch (error) {
+            console.error('Ошибка сохранения:', error);
+            alert(
+                error instanceof Error
+                    ? error.message
+                    : 'Ошибка сохранения событий'
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
     return (
         <Container>
             <h2 className="mb-4">События</h2>
@@ -82,7 +114,35 @@ const EventInfo: React.FC<EventInfoProps> = ({
                     </Button>
                 </div>
 
-                <ActionButtons onBack={onBack} onNext={onNext} />
+                <div className="d-flex justify-content-between">
+                    <Button
+                        variant="secondary"
+                        onClick={onBack}
+                        disabled={isSubmitting}
+                    >
+                        Назад
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={handleNextWithSave}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                                <span className="ms-2">Сохранение...</span>
+                            </>
+                        ) : (
+                            'Далее'
+                        )}
+                    </Button>
+                </div>
             </Card>
         </Container>
     );

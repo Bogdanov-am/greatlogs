@@ -1,28 +1,42 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Container, Col, Card } from "react-bootstrap";
-import { UploadFile, LogsUploadProps } from "../../types/LogsUploadTypes";
-import FileDropZone from "./FileDropZone";
-import UploadedFilesList from "./UploadedFilesList";
-import ActionButtons from "./ActionButtons";
+import React, { useState, useCallback, useEffect } from 'react';
+import { Container, Col, Card, Alert } from 'react-bootstrap';
+import { UploadingFile, StoredUploadFile } from '../../types/LogsUploadTypes';
+import { LogsUploadProps } from '../../types/LogsUploadTypes';
+import FileDropZone from './FileDropZone';
+import UploadedFilesList from './UploadedFilesList';
+import ActionButtons from './ActionButtons';
+import { postLogsUpload } from '../../api'; // Добавьте этот импорт
 
 const LogsUpload: React.FC<LogsUploadProps> = ({
+    onBack,
     onNext,
     onFilesUploaded,
     uploadedFiles = [],
 }) => {
-    const [files, setFiles] = useState<UploadFile[]>(uploadedFiles);
+    const [files, setFiles] = useState<UploadingFile[]>(() => {
+        return uploadedFiles.map((file) => ({
+            ...file,
+            file: new File([], file.name),
+        }));
+    });
+
     const [dragActive, setDragActive] = useState(false);
+    const [showNoFilesAlert, setShowNoFilesAlert] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null); // Состояние для ошибок
 
     useEffect(() => {
-        onFilesUploaded(files);
+        const completedFiles = files.filter((f) => f.status === 'completed');
+        if (completedFiles.length > 0) {
+            onFilesUploaded(completedFiles.map(({ file, ...rest }) => rest));
+        }
     }, [files, onFilesUploaded]);
 
     const handleDrag = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") {
+        if (e.type === 'dragenter' || e.type === 'dragover') {
             setDragActive(true);
-        } else if (e.type === "dragleave") {
+        } else if (e.type === 'dragleave') {
             setDragActive(false);
         }
     }, []);
@@ -37,64 +51,114 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
     }, []);
 
     const processFiles = (fileList: FileList) => {
-        const newFiles: UploadFile[] = Array.from(fileList)
+        const newFiles: UploadingFile[] = Array.from(fileList)
             .filter((file) => file.name.endsWith('.tlog'))
             .map((file) => ({
                 id: Math.random().toString(36).substring(2, 9),
                 name: file.name,
                 progress: 0,
                 status: 'pending',
-                file: file, // Сохраняем объект File
+                file: file,
             }));
 
         if (newFiles.length > 0) {
             setFiles((prev) => [...prev, ...newFiles]);
-            simulateUpload(newFiles);
+            uploadFiles(newFiles); // Заменили simulateUpload на uploadFiles
         }
     };
 
+    const uploadFiles = async (filesToUpload: UploadingFile[]) => {
+        setUploadError(null);
 
-    const simulateUpload = (filesToUpload: UploadFile[]) => {
-        filesToUpload.forEach((file) => {
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 10;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                }
-                setFiles((prev) =>
-                    prev.map((f) =>
-                        f.id === file.id
-                            ? {
-                                  ...f,
-                                  progress,
-                                  status:
-                                      progress < 100
-                                          ? "uploading"
-                                          : "completed",
-                              }
-                            : f
-                    )
-                );
-            }, 300);
-        });
+        // Статус "загружается"
+        setFiles((prev) =>
+            prev.map((f) =>
+                filesToUpload.some((uploadFile) => uploadFile.id === f.id)
+                    ? { ...f, status: 'uploading' }
+                    : f
+            )
+        );
+
+        try {
+            const result = await postLogsUpload(filesToUpload); // Ждём ответа
+
+            // Успех: обновляем статус и можно обработать результат
+            setFiles((prev) =>
+                prev.map((f) =>
+                    filesToUpload.some((uploadFile) => uploadFile.id === f.id)
+                        ? { ...f, status: 'completed', progress: 100 }
+                        : f
+                )
+            );
+
+            console.log('Файлы загружены:', result); // Можно использовать result для чего-то ещё
+        } catch (error) {
+            // Обрабатываем все возможные ошибки
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : 'Неизвестная ошибка загрузки';
+
+            setUploadError(errorMessage);
+            setFiles((prev) =>
+                prev.map((f) =>
+                    filesToUpload.some((uploadFile) => uploadFile.id === f.id)
+                        ? { ...f, status: 'error' }
+                        : f
+                )
+            );
+        }
     };
+
 
     const removeFile = (id: string) => {
         setFiles((prev) => prev.filter((file) => file.id !== id));
     };
 
     const cancelAll = () => {
+        setShowNoFilesAlert(false);
         setFiles([]);
+    };
+
+    const handleNextClick = () => {
+        if (files.length === 0) {
+            setShowNoFilesAlert(true);
+            return;
+        }
+
+        if (files.some((f) => f.status !== 'completed')) {
+            return;
+        }
+
+        onNext();
     };
 
     return (
         <Container
             className="mt-5"
-            style={{ maxWidth: "650px", minWidth: "300px" }}
+            style={{ maxWidth: '650px', minWidth: '300px' }}
         >
             <h2 className="mb-4">Загрузите логи (*.tlog)</h2>
+
+            {showNoFilesAlert && (
+                <Alert
+                    variant="danger"
+                    onClose={() => setShowNoFilesAlert(false)}
+                    dismissible
+                >
+                    Добавьте хотя бы один файл
+                </Alert>
+            )}
+
+            {uploadError && (
+                <Alert
+                    variant="danger"
+                    onClose={() => setUploadError(null)}
+                    dismissible
+                >
+                    {uploadError}
+                </Alert>
+            )}
 
             <Col className="mb-4">
                 <FileDropZone
@@ -111,17 +175,19 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
                         Загруженные файлы появляются здесь
                     </Card>
                 ) : (
-                    <UploadedFilesList files={files} onRemove={removeFile} />
+                    <UploadedFilesList
+                        files={files.map(({ file, ...rest }) => rest)}
+                        onRemove={removeFile}
+                    />
                 )}
             </Col>
 
             <ActionButtons
                 hasFiles={files.length > 0}
-                isNextDisabled={
-                    files.length === 0 || files.some((f) => f.progress < 100)
-                }
+                isNextDisabled={files.some((f) => f.status !== 'completed')}
+                onBack={onBack}
                 onCancel={cancelAll}
-                onNext={onNext}
+                onNext={handleNextClick}
             />
         </Container>
     );

@@ -1,7 +1,7 @@
 import { OtherFilesData } from './OtherFilesTypes'
 import { Event } from './EventInfoTypes'
 import { Device } from './DeviceInfoTypes'
-import { UploadFile } from './LogsUploadTypes'
+import { StoredUploadFile } from './LogsUploadTypes'
 import { SelectItem, Operator } from './ExperimentInfoTypes'
 
 export interface TestEntry {
@@ -19,9 +19,9 @@ export interface ActionButtonsProps {
 }
 
 export interface CustomFormData {
-    files: UploadFile[];
+    files: StoredUploadFile[];
     experiment: {
-        testDate: string;
+        experimentDate: string;
         locations: string;
         description: string;
         hasEvents: boolean;

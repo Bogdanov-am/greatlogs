@@ -1,51 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card } from 'react-bootstrap';
+import { Container, Card, Button } from 'react-bootstrap';
 import {
     ExperimentInfoProps,
     SelectItem,
 } from '../../types/ExperimentInfoTypes';
 import ExperimentBaseForm from './ExperimentBaseForm';
 import ActionButtons from '../ActionButtons';
+import { getLocations, getOperators, saveExperimentInfo } from '../../api';
 
-// import { fetchLocations, fetchOperators } from '../../api';
-
-// Добавляем функции для загрузки данных (замените на реальные API-вызовы)
-
-const fetchLocations = async (): Promise<SelectItem[]> => {
-    // Замените на реальный запрос к API
-    return [
-        { id: 1, label: 'Санкт-Петербург' },
-        { id: 2, label: 'Кронштадт' },
-        { id: 3, label: 'Архангельск' },
-        { id: 4, label: 'Анапа' },
-    ];
-};
-
-const fetchOperators = async (): Promise<SelectItem[]> => {
-    // Замените на реальный запрос к API
-    return [
-        { id: 1, label: 'Шиляев Я.Д.' },
-        { id: 2, label: 'Рыков А.Д.' },
-        { id: 3, label: 'Кирковров Ф.Б.' },
-        { id: 4, label: 'Билан Б.М.' },
-        { id: 5, label: 'Мусагалиев А.Т.' },
-        { id: 6, label: 'Дорохов Д.Д.' },
-        { id: 7, label: 'Михайлов С.М.' },
-        { id: 8, label: 'Сиек Ю.Л.' },
-        { id: 9, label: 'Пак А.Д.' },
-        { id: 10, label: 'Ницше Ф.В.' },
-    ];
-};
-
-const ExperimentInfo: React.FC<
-    ExperimentInfoProps & {
-        shouldHighlightError: (fieldName: string, value: any) => boolean;
-        markFieldAsTouched: (fieldName: string) => void;
-    }
-> = ({
+const ExperimentInfo: React.FC<ExperimentInfoProps> = ({
     data,
     onChange,
-    onBack,
     onNext,
     shouldHighlightError,
     markFieldAsTouched,
@@ -55,13 +20,58 @@ const ExperimentInfo: React.FC<
         locations: true,
         operators: true,
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleCancel = () => {
+        if (
+            window.confirm(
+                'Вы уверены, что хотите отменить создание испытания? Все введенные данные будут потеряны.'
+            )
+        ) {
+            localStorage.removeItem('experimentForm');
+            window.location.href = '/';
+        }
+    };
+
+    const handleNextWithSave = async () => {
+        setIsSubmitting(true);
+        try {
+            // Проверка заполненности полей
+            const missingFields = [];
+            if (!data.experimentDate) missingFields.push('experimentDate');
+            if (!data.description?.trim()) missingFields.push('description');
+            if (!data.reportFile) missingFields.push('reportFile');
+            if (!data.recordCreator) missingFields.push('recordCreator');
+            if (!data.responsibleOperator)
+                missingFields.push('responsibleOperator');
+
+            if (missingFields.length > 0) {
+                throw new Error(
+                    `Заполните обязательные поля: ${missingFields.join(', ')}`
+                );
+            }
+
+            await saveExperimentInfo({
+                experimentDate: data.experimentDate,
+                description: data.description,
+                reportFile: data.reportFile,
+                responsibleOperator: data.responsibleOperator,
+                recordCreator: data.recordCreator,
+            });
+            onNext();
+        } catch (error) {
+            console.error('Save error:', error);
+            alert(error instanceof Error ? error.message : 'Ошибка сохранения');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const [locations, operators] = await Promise.all([
-                    fetchLocations(),
-                    fetchOperators(),
+                    getLocations(),
+                    getOperators(),
                 ]);
 
                 onChange({
@@ -103,7 +113,23 @@ const ExperimentInfo: React.FC<
                         touchedFields={touchedFields}
                     />
 
-                    <ActionButtons onBack={onBack} onNext={onNext} />
+                    <div className="d-flex justify-content-between mt-4">
+                        <Button
+                            variant="outline-danger"
+                            onClick={handleCancel}
+                            size="lg"
+                            disabled={isSubmitting}
+                        >
+                            Отменить
+                        </Button>
+                        <Button
+                            variant="primary"
+                            onClick={handleNextWithSave}
+                            size="lg"
+                        >
+                            {isSubmitting ? 'Сохранение...' : 'Далее'}
+                        </Button>
+                    </div>
                 </Card.Body>
             </Card>
         </Container>

@@ -2,6 +2,8 @@ import React from 'react';
 import { Container, Button } from 'react-bootstrap';
 import TestCard from '../components/ExperimentCard';
 import { TestEntry } from '../types/PagesTypes';
+import { useNavigate } from 'react-router-dom';
+import ExperimentCard from '../components/ExperimentCard';
 
 interface HomePageProps {
     tests: TestEntry[];
@@ -14,6 +16,11 @@ const HomePage: React.FC<HomePageProps> = ({
     onAddTestClick,
     onDeleteTest,
 }) => {
+    const navigate = useNavigate();
+
+    const handleViewExperiment = (test: TestEntry) => {
+        navigate(`/test/${test.id}`, { state: { testData: test } });
+    }
     return (
         <Container
             className="d-flex flex-column align-items-center py-4"
@@ -49,10 +56,11 @@ const HomePage: React.FC<HomePageProps> = ({
                     </p>
                 ) : (
                     tests.map((test) => (
-                        <TestCard
+                        <ExperimentCard
                             key={test.id}
                             {...test}
                             onDelete={() => onDeleteTest(test.id)}
+                            onView={() => handleViewExperiment(test)}
                         />
                     ))
                 )}
