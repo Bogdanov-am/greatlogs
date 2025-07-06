@@ -70,7 +70,6 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
     const uploadFiles = async (filesToUpload: UploadingFile[]) => {
         setUploadError(null);
 
-        // Статус "загружается"
         setFiles((prev) =>
             prev.map((f) =>
                 filesToUpload.some((uploadFile) => uploadFile.id === f.id)
@@ -82,7 +81,6 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
         try {
             const result = await postLogsUpload(filesToUpload); // Ждём ответа
 
-            // Успех: обновляем статус и можно обработать результат
             setFiles((prev) =>
                 prev.map((f) =>
                     filesToUpload.some((uploadFile) => uploadFile.id === f.id)
@@ -90,10 +88,8 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
                         : f
                 )
             );
-
-            console.log('Файлы загружены:', result); // Можно использовать result для чего-то ещё
+            
         } catch (error) {
-            // Обрабатываем все возможные ошибки
             const errorMessage =
                 error instanceof Error
                     ? error.message

@@ -25,18 +25,16 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
 }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false); // Состояние отправки
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const loadDevices = async () => {
             try {
                 setLoading(true);
                 const devicesData = await getMavlinkSysIds();
-                console.log(devicesData);
                 onChange(devicesData);
                 setError(null);
             } catch (err) {
-                console.error('Ошибка загрузки устройств:', err);
                 setError('Не удалось загрузить список устройств');
             } finally {
                 setLoading(false);
@@ -140,9 +138,10 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
                 </div>
                 <div className="d-flex justify-content-between">
                     <Button
-                        variant="secondary"
+                        variant="outline-secondary"
                         onClick={onBack}
                         disabled={isSubmitting}
+                        size="lg"
                     >
                         Назад
                     </Button>
@@ -150,6 +149,7 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
                         variant="primary"
                         onClick={handleNextWithSave}
                         disabled={isSubmitting}
+                        size="lg"
                     >
                         {isSubmitting ? (
                             <>

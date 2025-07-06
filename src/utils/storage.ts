@@ -1,4 +1,4 @@
-type StorageKey = 'experimentForm'
+// type StorageKey = 'experimentForm'
 
 export const safeGet = <T>(key: string): T | null => {
     try {
@@ -9,7 +9,7 @@ export const safeGet = <T>(key: string): T | null => {
     }
 };
 
-// Добавляем новую функцию-проверку
+
 export const checkStorageLimit = (data: unknown, margin = 50000): boolean => {
     try {
         const testData = JSON.stringify(data);
@@ -20,7 +20,7 @@ export const checkStorageLimit = (data: unknown, margin = 50000): boolean => {
     }
 };
 
-// Модифицируем safeSet
+
 export const safeSet = (key: string, value: unknown): boolean => {
     if (typeof window === 'undefined') return false;
 

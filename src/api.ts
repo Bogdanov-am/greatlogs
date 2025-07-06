@@ -3,7 +3,7 @@ import { SelectItem } from './types/ExperimentInfoTypes';
 import { Device, DeviceType } from './types/DeviceInfoTypes';
 import { Event } from './types/EventInfoTypes';
 
-const API_BASE_URL = 'http://10.200.10.214:5000';
+const API_BASE_URL = 'http://10.200.10.219:5000';
 
 export const postLogsUpload = async (files: UploadingFile[]) => {
     const formData = new FormData();
@@ -21,7 +21,7 @@ export const postLogsUpload = async (files: UploadingFile[]) => {
     if (!response.ok) {
         throw new Error('Ошибка при загрузке файлов');
     }
-
+    console.log('Лог отправелен');
     return await response.json();
 };
 
@@ -136,7 +136,7 @@ export const saveExperimentInfo = async (data: {
             console.error('Полный ответ сервера:', errorText);
             throw new Error(errorText || 'Неизвестная ошибка сервера');            
         }
-        console.log('Успех');
+        console.log('Успешная отправка ExperimentInfo');
         return await response.json();
     } catch (error) {
         console.error('Полная ошибка API:', error);
@@ -154,12 +154,11 @@ export const getMavlinkSysIds = async (): Promise<Device[]> => {
         }        
         const data = await response.json();
         
-        // Проверка на undefined и корректную структуру
         if (!data?.mavlink_system_id || !Array.isArray(data.mavlink_system_id)) {
             console.error('Неверный формат данных:', data);
-            return []; // Возвращаем пустой массив вместо ошибки
+            return [];
         }
-        
+        console.log('Список аппаратов получен');
         return data.mavlink_system_id.map((sys_id: number) => ({
             mavlinkSysId: sys_id.toString(),
             deviceType: DeviceType.ORKAN,
@@ -168,19 +167,15 @@ export const getMavlinkSysIds = async (): Promise<Device[]> => {
         }));
     } catch (error) {
         console.error('Ошибка API:', error);
-        return []; // Возвращаем пустой массив вместо throw
+        return [];
     }
 };
 
 
-
-
 export const saveDevicesInfo = async (devices: Device[]) => {
     try {
-        // Сначала сохраняем основные данные устройств
         const deviceResponses = await Promise.all(
-            devices.map(async (device) => {
-                // 1. Сохраняем основную информацию об устройстве
+            devices.map(async (device) => {                
                 const deviceResponse = await fetch(`${API_BASE_URL}/devices`, {
                     method: 'POST',
                     headers: {
@@ -193,18 +188,18 @@ export const saveDevicesInfo = async (devices: Device[]) => {
                 });
 
                 if (!deviceResponse.ok) {
-                    throw new Error('Ошибка сохранения устройства');
+                    throw new Error('Ошибка сохранения device type и sys_id');
                 }
+                console.log('Успешная отправка device type и sys_id')
 
                 const deviceData = await deviceResponse.json();
-                const deviceId = deviceData.device_id;
 
-                // 2. Сохраняем видеофайлы (если есть)
                 if (device.onboardVideos.length > 0) {
                     const videoFormData = new FormData();
                     device.onboardVideos.forEach(file => {
                         videoFormData.append('file', file);
                     });
+
 
                     const videoResponse = await fetch(`${API_BASE_URL}/device-records`, {
                         method: 'POST',
@@ -214,9 +209,11 @@ export const saveDevicesInfo = async (devices: Device[]) => {
                     if (!videoResponse.ok) {
                         throw new Error('Ошибка сохранения видео');
                     }
+                    console.log('Успешная отправка видео с борта аппарата')
+                } else {
+                    console.log("Нет добавленных видео")
                 }
 
-                // 3. Сохраняем файлы параметров (если есть)
                 if (device.parametersFiles.length > 0) {
                     const paramsFormData = new FormData();
                     device.parametersFiles.forEach(file => {
@@ -231,6 +228,9 @@ export const saveDevicesInfo = async (devices: Device[]) => {
                     if (!paramsResponse.ok) {
                         throw new Error('Ошибка сохранения параметров');
                     }
+                    console.log('Успешная отправка файлов аппарата')
+                } else {
+                    console.log("Нет добавленных параметров")
                 }
 
                 return deviceData;
@@ -245,27 +245,31 @@ export const saveDevicesInfo = async (devices: Device[]) => {
 };
 
 
-
-
 export const saveEventInfo = async (events: Event[]) => {
-    const formData = new FormData();
+    try {
+        const eventResponses = await Promise.all(
+            events.map(async (event) => {
+            const eventResponse = await fetch(`${API_BASE_URL}/events`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    description: event.description,
+                    event_time: event.time
+                }),
+            });
+            const responseData = await eventResponse.json();
 
-    events.forEach((event, eventIndex) => {
-        formData.append(`events[${eventIndex}][description]`, event.description);
-        formData.append(`events[${eventIndex}][time]`, event.time);
-
-        event.deviceIds.forEach((deviceId, deviceIndex) => {
-            formData.append(`events[${eventIndex}][deviceIds][${deviceIndex}]`, deviceId);
-        });
-    });
-
-    const response = await fetch('/events', {
-        method: 'POST',
-        body: formData,
-    });
-
-    if (!response.ok) {
-        throw new Error('Ошибка сохранения событий');
+            if (!eventResponse.ok) {
+                throw new Error('Ошибка сохранения события');
+            }
+            console.log('Успешная отправка данных о событии')
+            return responseData
+        }));
+    return eventResponses;
+    } catch (error) {
+        console.error('Ошибка дынных о собтиях:', error);
+        throw error;
     }
 }
-

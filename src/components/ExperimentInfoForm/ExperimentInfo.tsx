@@ -73,7 +73,7 @@ const ExperimentInfo: React.FC<ExperimentInfoProps> = ({
                     getLocations(),
                     getOperators(),
                 ]);
-
+                console.log('Операторы и локации получены')
                 onChange({
                     ...data,
                     availableLocations: locations,
