@@ -2,16 +2,20 @@ import { UploadingFile } from './types/LogsUploadTypes';
 import { SelectItem } from './types/ExperimentInfoTypes';
 import { Device, DeviceType } from './types/DeviceInfoTypes';
 import { Event } from './types/EventInfoTypes';
+import { AdditionalFile} from './types/OtherFilesTypes';
 
 const API_BASE_URL = 'http://10.200.10.219:5000';
 
-export const postLogsUpload = async (files: UploadingFile[]) => {
+export const postLogsUpload = async (files: UploadingFile[], experimentId?: number) => {
+    if (!experimentId) throw new Error('ExperimentId is required');
+
     const formData = new FormData();
     files.forEach((file) => {
         if (file.file) {
             formData.append('file', file.file);
         }
     });
+    formData.append('experiment_id', experimentId.toString());
 
     const response = await fetch(`${API_BASE_URL}/logs`, {
         method: 'POST',
@@ -136,8 +140,11 @@ export const saveExperimentInfo = async (data: {
             console.error('Полный ответ сервера:', errorText);
             throw new Error(errorText || 'Неизвестная ошибка сервера');            
         }
-        console.log('Успешная отправка ExperimentInfo');
-        return await response.json();
+
+        const responseData = await response.json();
+        console.log('Эксперимент создан, ID: ', responseData.experiment_id);
+        
+        return responseData.experiment_id;
     } catch (error) {
         console.error('Полная ошибка API:', error);
         throw error;
@@ -172,8 +179,10 @@ export const getMavlinkSysIds = async (): Promise<Device[]> => {
 };
 
 
-export const saveDevicesInfo = async (devices: Device[]) => {
+export const saveDevicesInfo = async (devices: Device[], experimentId?: number) => {
     try {
+        if (!experimentId) throw new Error('ExperimentId is required');
+
         const deviceResponses = await Promise.all(
             devices.map(async (device) => {                
                 const deviceResponse = await fetch(`${API_BASE_URL}/devices`, {
@@ -191,13 +200,24 @@ export const saveDevicesInfo = async (devices: Device[]) => {
                     throw new Error('Ошибка сохранения device type и sys_id');
                 }
                 console.log('Успешная отправка device type и sys_id')
-
                 const deviceData = await deviceResponse.json();
+
+                const experimentDeviceData = new FormData();
+                experimentDeviceData.append('experiment_id', experimentId.toString());
+                experimentDeviceData.append('device_id', deviceData.device_id);
+
+
+                const experimentDeviceResponse = await fetch(`${API_BASE_URL}/experiment-device`, {
+                    method: 'POST',
+                    body: experimentDeviceData,
+                });
 
                 if (device.onboardVideos.length > 0) {
                     const videoFormData = new FormData();
                     device.onboardVideos.forEach(file => {
                         videoFormData.append('file', file);
+                        videoFormData.append('device_id', deviceData.device_id);
+                        videoFormData.append('experiment_id', experimentId.toString());
                     });
 
 
@@ -218,6 +238,8 @@ export const saveDevicesInfo = async (devices: Device[]) => {
                     const paramsFormData = new FormData();
                     device.parametersFiles.forEach(file => {
                         paramsFormData.append('file', file);
+                        paramsFormData.append('device_id', deviceData.device_id);
+                        paramsFormData.append('experiment_id', experimentId.toString());
                     });
 
                     const paramsResponse = await fetch(`${API_BASE_URL}/device-parameters`, {
@@ -245,7 +267,7 @@ export const saveDevicesInfo = async (devices: Device[]) => {
 };
 
 
-export const saveEventInfo = async (events: Event[]) => {
+export const saveEventInfo = async (events: Event[], experimentId?: number) => {
     try {
         const eventResponses = await Promise.all(
             events.map(async (event) => {
@@ -256,7 +278,8 @@ export const saveEventInfo = async (events: Event[]) => {
                 },
                 body: JSON.stringify({
                     description: event.description,
-                    event_time: event.time
+                    event_time: event.time,
+                    experiment_id: experimentId?.toString(),
                 }),
             });
             const responseData = await eventResponse.json();
@@ -273,3 +296,100 @@ export const saveEventInfo = async (events: Event[]) => {
         throw error;
     }
 }
+
+
+export const saveOtherFiles = async (data: {
+    screenshots: AdditionalFile[],
+    screenRecordings: (File | null)[],
+    additionalAttachments: (File | null)[]
+}, experimentId?: number) => {
+    if (!experimentId) throw new Error('ExperimentId is required');
+
+    try {
+        const screenshotResults = await Promise.all(
+            data.screenshots.map(async (screenshot) => {
+                if (!screenshot.file) {
+                    console.log("Нет добавленных скриншотов");
+                    return true;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', screenshot.file);
+                formData.append('description', screenshot.description);
+                formData.append('experiment_id', experimentId?.toString());
+                
+                const response = await fetch(`${API_BASE_URL}/experiment_screenshots`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!response.ok) {
+                    console.error("Ошибка при загрузке скриншота", await response.text())
+                    return false;
+                }
+                console.log('Успешная отправка скриншота');
+                return true;
+            })
+        );
+
+        // Обработка записей экрана
+        const recordingResults = await Promise.all(
+            data.screenRecordings.map(async (recording) => {
+                if (!recording) {
+                    console.log("Нет добавленных записей экрана");
+                    return true;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', recording);
+                formData.append('experiment_id', experimentId?.toString());
+                
+                const response = await fetch(`${API_BASE_URL}/experiment_recordings`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!response.ok) {
+                    console.error("Ошибк при загрузке записи экрана", await response.text())
+                    return false;
+                }
+                console.log('Успешная отправка записи экрана');
+                return true;
+            })
+        );
+
+        // Обработка вложений
+        const attachmentResults = await Promise.all(
+            data.additionalAttachments.map(async (attachment) => {
+                if (!attachment) {
+                    console.log("Нет добавленных вложений");
+                    return true;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', attachment);
+                formData.append('experiment_id', experimentId?.toString());
+                
+                const response = await fetch(`${API_BASE_URL}/experiment_attachments`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!response.ok) {
+                    console.error("Ошибк при загрузке вложений", await response.text())
+                    return false;
+                }
+                console.log('Успешная отправка дополнительного вложения');
+                return true;
+            })
+        );
+
+        // Проверяем, что все загрузки прошли успешно
+        return screenshotResults.every(Boolean) && 
+               recordingResults.every(Boolean) && 
+               attachmentResults.every(Boolean);
+    } catch (error) {
+        console.error('Error submitting files:', error);
+        return false;
+    }
+};

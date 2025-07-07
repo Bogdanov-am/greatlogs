@@ -8,6 +8,7 @@ import ActionButtons from './ActionButtons';
 import { postLogsUpload } from '../../api'; // Добавьте этот импорт
 
 const LogsUpload: React.FC<LogsUploadProps> = ({
+    experimentId,
     onBack,
     onNext,
     onFilesUploaded,
@@ -79,7 +80,7 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
         );
 
         try {
-            const result = await postLogsUpload(filesToUpload); // Ждём ответа
+            const result = await postLogsUpload(filesToUpload, experimentId); // Ждём ответа
 
             setFiles((prev) =>
                 prev.map((f) =>

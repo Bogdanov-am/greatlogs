@@ -25,6 +25,7 @@ export interface DevicesFormProps {
     shouldHighlightError: (field: string, value: any) => boolean;
     markFieldAsTouched: (field: string) => void;
     validateStep: () => boolean;
+    experimentId?: number;
 }
 
 export interface DeviceFileUploadProps {

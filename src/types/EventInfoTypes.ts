@@ -27,6 +27,7 @@ export interface EventInfoProps {
     shouldHighlightError: (fieldName: string, value: any) => boolean;
     markFieldAsTouched: (fieldName: string) => void;
     validateStep: () => boolean;
+    experimentId?: number;
 }
 
 export interface EventTimeInputProps {

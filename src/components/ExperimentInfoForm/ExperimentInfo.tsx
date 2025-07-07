@@ -50,13 +50,19 @@ const ExperimentInfo: React.FC<ExperimentInfoProps> = ({
                 );
             }
 
-            await saveExperimentInfo({
+            const experimentId = await saveExperimentInfo({
                 experimentDate: data.experimentDate,
                 description: data.description,
                 reportFile: data.reportFile,
                 responsibleOperator: data.responsibleOperator,
                 recordCreator: data.recordCreator,
             });
+
+            onChange({
+                ...data,
+                experimentId: experimentId
+            })
+
             onNext();
         } catch (error) {
             console.error('Save error:', error);

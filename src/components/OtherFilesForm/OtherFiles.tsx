@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Container } from 'react-bootstrap';
+import { Button, Card, Container, Spinner } from 'react-bootstrap';
 import ScreenshotsSection from './ScreenshotsSection';
 import RecordingsSection from './RecordingsSection';
 import AttachmentsSection from './AttachmentsSection';
 import { OtherFilesProps, AdditionalFile } from '../../types/OtherFilesTypes';
+import { saveOtherFiles } from '../../api';
 
 const OtherFiles: React.FC<OtherFilesProps> = ({
+    experimentId,
     onSubmit,
     onBack,
     initialData,
     shouldHighlightError,
     markFieldAsTouched,
-    // markFieldAsUntouched,
     onChange,
     clearTouchedFieldsByPrefix,
+    validateStep,
 }) => {
     const [screenshots, setScreenshots] = useState<AdditionalFile[]>(
         initialData?.screenshots ?? []
@@ -24,6 +26,8 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
     const [additionalAttachments, setAdditionalAttachments] = useState<
         (File | null)[]
     >(initialData?.additionalAttachments ?? []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         onChange({
@@ -33,18 +37,50 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
         });
     }, [screenshots, screenRecordings, additionalAttachments, onChange]);
 
-    const clearTouchedFields = () => {
-        // Очищаем touched для всех существующих полей
-        screenshots.forEach((_, i) => {
-            markFieldAsTouched(`otherFiles.screenshots[${i}].file`);
-            markFieldAsTouched(`otherFiles.screenshots[${i}].description`);
-        });
-        screenRecordings.forEach((_, i) => {
-            markFieldAsTouched(`otherFiles.screenRecordings[${i}]`);
-        });
-        additionalAttachments.forEach((_, i) => {
-            markFieldAsTouched(`otherFiles.additionalAttachments[${i}]`);
-        });
+    const handleSubmitWithSave = async () => {
+        // Добавлено async здесь
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            // Валидация полей
+            screenshots.forEach((_, i) => {
+                markFieldAsTouched(`otherFiles.screenshots[${i}].file`);
+                markFieldAsTouched(`otherFiles.screenshots[${i}].description`);
+            });
+
+            screenRecordings.forEach((_, i) => {
+                markFieldAsTouched(`otherFiles.screenRecordings[${i}]`);
+            });
+
+            additionalAttachments.forEach((_, i) => {
+                markFieldAsTouched(`otherFiles.additionalAttachments[${i}]`);
+            });
+
+            if (!validateStep()) {
+                throw new Error('Заполните все обязательные поля');
+            }
+
+            await saveOtherFiles(
+                {
+                    screenshots,
+                    screenRecordings,
+                    additionalAttachments,
+                },
+                experimentId
+            );
+
+            onSubmit();
+        } catch (error) {
+            console.error('Ошибка сохранения дополнительных файлов: ', error);
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : 'Ошибка при сохранении файлов'
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -72,17 +108,6 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
                             newScreenshots[index].description = description;
                             setScreenshots(newScreenshots);
                         }}
-                        // onRemove={(index) => {
-                        //     setScreenshots(
-                        //         screenshots.filter((_, i) => i !== index)
-                        //     );
-                        //     markFieldAsUntouched(
-                        //         `otherFiles.screenshots[${index}].file`
-                        //     );
-                        //     markFieldAsUntouched(
-                        //         `otherFiles.screenshots[${index}].description`
-                        //     );
-                        // }}
                         onRemove={(index) => {
                             setScreenshots(
                                 screenshots.filter((_, i) => i !== index)
@@ -105,14 +130,6 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
                             newRecordings[index] = file;
                             setScreenRecordings(newRecordings);
                         }}
-                        // onRemove={(index) => {
-                        //     setScreenRecordings(
-                        //         screenRecordings.filter((_, i) => i !== index)
-                        //     );
-                        //     markFieldAsUntouched(
-                        //         `otherFiles.screenRecordings[${index}]`
-                        //     );
-                        // }}
                         onRemove={(index) => {
                             setScreenRecordings(
                                 screenRecordings.filter((_, i) => i !== index)
@@ -138,16 +155,6 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
                             newAttachments[index] = file;
                             setAdditionalAttachments(newAttachments);
                         }}
-                        // onRemove={(index) => {
-                        //     setAdditionalAttachments(
-                        //         additionalAttachments.filter(
-                        //             (_, i) => i !== index
-                        //         )
-                        //     );
-                        //     markFieldAsUntouched(
-                        //         `otherFiles.additionalAttachments[${index}]`
-                        //     );
-                        // }}
                         onRemove={(index) => {
                             setAdditionalAttachments(
                                 additionalAttachments.filter(
@@ -170,8 +177,26 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
                     >
                         Назад
                     </Button>
-                    <Button variant="primary" onClick={() => onSubmit()} size="lg">
-                        Создать запись
+                    <Button
+                        variant="primary"
+                        onClick={handleSubmitWithSave}
+                        size="lg"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                                <span className="ms-2">Сохранение...</span>
+                            </>
+                        ) : (
+                            'Создать запись'
+                        )}
                     </Button>
                 </div>
             </Card>

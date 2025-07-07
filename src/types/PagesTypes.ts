@@ -21,6 +21,7 @@ export interface ActionButtonsProps {
 export interface CustomFormData {
     files: StoredUploadFile[];
     experiment: {
+        experimentId?: number;
         experimentDate: string;
         locations: string;
         description: string;

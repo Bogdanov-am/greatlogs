@@ -3,18 +3,10 @@ import { Card, Container, Spinner, Button } from 'react-bootstrap';
 import { Device } from '../../types/DeviceInfoTypes';
 import DeviceItem from './DeviceItem';
 import { getMavlinkSysIds, saveDevicesInfo } from '../../api'; // Добавляем новый метод API
-
-interface DevicesFormProps {
-    devices: Device[];
-    onChange: (devices: Device[]) => void;
-    onBack: () => void;
-    onNext: () => void;
-    shouldHighlightError: (field: string, value: any) => boolean;
-    markFieldAsTouched: (field: string) => void;
-    validateStep: () => boolean;
-}
+import { DevicesFormProps } from '../../types/DeviceInfoTypes';
 
 const DevicesInfo: React.FC<DevicesFormProps> = ({
+    experimentId,
     devices,
     onChange,
     onBack,
@@ -73,7 +65,7 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
             }
 
             // Сохраняем данные устройств
-            await saveDevicesInfo(devices);
+            await saveDevicesInfo(devices, experimentId);
             onNext();
         } catch (error) {
             console.error('Ошибка сохранения:', error);

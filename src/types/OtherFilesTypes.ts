@@ -19,6 +19,7 @@ export interface OtherFilesProps {
     validateStep: () => boolean;
     onChange: (data: OtherFilesData) => void;
     clearTouchedFieldsByPrefix: (prefix: string) => void;
+    experimentId?: number;
 }
 
 export interface FileInputRowProps {
@@ -62,3 +63,17 @@ export interface ScreenshotsSectionProps {
     shouldHighlightError: (fieldName: string, value: any) => boolean;
     markFieldAsTouched: (fieldName: string) => void;
 }
+
+
+// Добавьте этот код в ваш файл OtherFilesTypes.txt
+// export interface FileUploadResponse {
+//     success: boolean;
+//     message?: string;
+// }
+
+// Добавьте этот интерфейс в OtherFilesTypes.txt
+// export interface OtherFilesSubmitProps {
+//     screenshots: AdditionalFile[];
+//     screenRecordings: (File | null)[];
+//     additionalAttachments: (File | null)[];
+// }

@@ -19,6 +19,9 @@ interface FormsPageProps {
 
 const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
     const [currentStep, setCurrentStep] = useState<number>(1);
+    const [createdExperimentId, setcreatedExperimentId] = useState<
+        number | null
+    >(null);
     const [formData, setFormData] = usePersistForm<CustomFormData>(
         'experimentForm',
         {
@@ -71,7 +74,6 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
         window.addEventListener('storage', handler);
         return () => window.removeEventListener('storage', handler);
     });
-
 
     const validateStep = (step: number): boolean => {
         switch (step) {
@@ -216,7 +218,6 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                 }
                 alert(errorMessage);
             }
-
         } else {
             if (currentStep === 4) {
                 // EventInfo
@@ -264,7 +265,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
         }
 
         const newTest: TestEntry = {
-            id: Date.now().toString(),
+            id: formData.experiment.experimentId?.toString() ?? '',
             creationDate: new Date().toLocaleDateString('ru-RU'),
             testDate: formData.experiment.experimentDate,
             description: formData.experiment.description,
@@ -347,22 +348,22 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                                 responsibleOperator:
                                     experimentData.responsibleOperator,
                                 recordCreator: experimentData.recordCreator,
+                                experimentId: experimentData.experimentId,
                             },
                         }));
                     }}
-                    // onBack={() => setCurrentStep(1)}
                     onNext={handleNext}
                     shouldHighlightError={shouldHighlightError}
                     markFieldAsTouched={markFieldAsTouched}
                     touchedFields={touchedFields}
                 />
-            ) : // В разделе return компонента FormsPage замените текущий закомментированный блок на:
-            currentStep === 2 ? (
+            ) : currentStep === 2 ? (
                 <LogsUpload
                     onBack={() => setCurrentStep(1)}
                     onNext={handleNext}
                     onFilesUploaded={onFilesUploaded}
                     uploadedFiles={formData.files}
+                    experimentId={formData.experiment.experimentId}
                 />
             ) : currentStep === 3 ? (
                 <DevicesForm
@@ -382,6 +383,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                     shouldHighlightError={shouldHighlightError}
                     markFieldAsTouched={markFieldAsTouched}
                     validateStep={() => validateStep(3)}
+                    experimentId={formData.experiment.experimentId}
                 />
             ) : currentStep === 4 ? (
                 <EventInfo
@@ -402,6 +404,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                     shouldHighlightError={shouldHighlightError}
                     markFieldAsTouched={markFieldAsTouched}
                     validateStep={() => validateStep(4)}
+                    experimentId={formData.experiment.experimentId}
                 />
             ) : currentStep === 5 ? (
                 <OtherFiles
@@ -415,6 +418,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                     clearTouchedFieldsByPrefix={clearTouchedFieldsByPrefix}
                     validateStep={() => validateStep(5)}
                     onChange={handleotherFilesChange}
+                    experimentId={formData.experiment.experimentId}
                 />
             ) : null}
         </Container>

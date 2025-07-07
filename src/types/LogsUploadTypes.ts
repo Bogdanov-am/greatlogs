@@ -17,6 +17,7 @@ export interface LogsUploadProps {
    onBack: () => void;
    onFilesUploaded: (files: UploadFile[]) => void;
    uploadedFiles: UploadFile[];
+   experimentId?: number;
 }
 
 export interface UploadedFilesListProps {

@@ -6,6 +6,7 @@ import ActionButtons from "../ActionButtons";
 import { saveEventInfo } from '../../api';
 
 const EventInfo: React.FC<EventInfoProps> = ({
+    experimentId,
     events,
     devices,
     onChange,
@@ -70,7 +71,7 @@ const EventInfo: React.FC<EventInfoProps> = ({
                 );
             }
 
-            await saveEventInfo(events);
+            await saveEventInfo(events, experimentId);
             onNext();
         } catch (error) {
             console.error('Ошибка сохранения:', error);
@@ -116,7 +117,7 @@ const EventInfo: React.FC<EventInfoProps> = ({
 
                 <div className="d-flex justify-content-between">
                     <Button
-                        variant="secondary"
+                        variant="outline-secondary"
                         onClick={onBack}
                         disabled={isSubmitting}
                     >
