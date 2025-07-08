@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Button } from 'react-bootstrap';
-import {
-    ExperimentInfoProps,
-    SelectItem,
-} from '../../types/ExperimentInfoTypes';
+import { ExperimentInfoProps } from '../../types/ExperimentInfoTypes';
 import ExperimentBaseForm from './ExperimentBaseForm';
-import ActionButtons from '../ActionButtons';
 import { getLocations, getOperators, saveExperimentInfo } from '../../api';
 
 const ExperimentInfo: React.FC<ExperimentInfoProps> = ({
@@ -35,7 +31,6 @@ const ExperimentInfo: React.FC<ExperimentInfoProps> = ({
     const handleNextWithSave = async () => {
         setIsSubmitting(true);
         try {
-            // Проверка заполненности полей
             const missingFields = [];
             if (!data.experimentDate) missingFields.push('experimentDate');
             if (!data.description?.trim()) missingFields.push('description');
@@ -56,6 +51,8 @@ const ExperimentInfo: React.FC<ExperimentInfoProps> = ({
                 reportFile: data.reportFile,
                 responsibleOperator: data.responsibleOperator,
                 recordCreator: data.recordCreator,
+                operators: data.operators,
+                selectedLocation: data.selectedLocation,
             });
 
             onChange({

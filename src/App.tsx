@@ -18,7 +18,6 @@ function App() {
     });
     const navigate = useNavigate();
 
-    // Сохраняем тесты в localStorage при изменении
     useEffect(() => {
         localStorage.setItem('tests', JSON.stringify(tests));
     }, [tests]);

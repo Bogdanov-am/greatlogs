@@ -51,13 +51,11 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
             label: op.label,
         }));
 
-        // Проверяем, есть ли текущий ответственный оператор в новом списке
         const currentResponsible = data.responsibleOperator;
         const responsibleStillValid = data.responsibleOperator
             ? newOperators.some((op) => op.id === data.responsibleOperator?.id)
             : false;
 
-        // Проверяем, есть ли текущий составитель записи в новом списке
         const currentCreator = data.recordCreator;
         const creatorStillValid = data.recordCreator
             ? newOperators.some((op) => op.id === data.recordCreator?.id)
@@ -68,10 +66,8 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
             operators: newOperators,
             responsibleOperator: responsibleStillValid
                 ? currentResponsible
-                : // ? data.responsibleOperator
-                  null,
+                : null,
             recordCreator: creatorStillValid ? currentCreator : null,
-            // recordCreator: creatorStillValid ? data.recordCreator : null,
         });
     };
 

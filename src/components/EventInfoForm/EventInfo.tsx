@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Button, Card, Container, Spinner } from 'react-bootstrap';
 import { Event, EventInfoProps } from '../../types/EventInfoTypes';
 import EventItem from './EventItem';
-import ActionButtons from "../ActionButtons";
 import { saveEventInfo } from '../../api';
 
 const EventInfo: React.FC<EventInfoProps> = ({
