@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import FormsPage from './pages/FormsPage';
+import ExperimentViewPage from './pages/ExperimentViewPage';
 import { useState, useEffect } from 'react';
 import { TestEntry } from './types/PagesTypes';
 import './App.css';
@@ -23,16 +24,40 @@ function App() {
     }, [tests]);
 
     const handleAddTest = () => navigate('/upload');
+
     const handleTestCreated = (newTest: TestEntry) => {
         const updatedTests = [...tests, newTest];
         setTests(updatedTests);
         console.log('Перенаправление');
         navigate('/');
     };
-    const handleDeleteTest = (id: string) => {
-        const updatedTests = tests.filter((test) => test.id !== id);
-        setTests(updatedTests);
+
+    const handleDeleteTest = async (id: string) => {
+        try {
+            const response = await fetch(
+                `http://10.200.10.219:5000/api/experiments/${id}`,
+                {
+                    method: 'DELETE',
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(
+                    errorData.error || 'Ошибка при удалении эксперимента'
+                );
+            }
+
+            // Удаляем из локального хранилища только после успешного удаления на сервере
+            const updatedTests = tests.filter((test) => test.id !== id);
+            setTests(updatedTests);
+        } catch (err) {
+            console.error('Ошибка при удалении эксперимента:', err);
+            // Можно добавить toast-уведомление или Alert
+            alert(err instanceof Error ? err.message : 'Неизвестная ошибка при удалении эксперимента');
+        }
     };
+
 
     return (
         <div className="App">
@@ -55,6 +80,10 @@ function App() {
                             onCancel={() => navigate('/')}
                         />
                     }
+                />
+                <Route
+                    path="/experiment/:id"
+                    element={<ExperimentViewPage />}
                 />
             </Routes>
         </div>

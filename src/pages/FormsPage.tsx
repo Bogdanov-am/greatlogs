@@ -15,6 +15,8 @@ import { checkStorageLimit } from '../utils/storage';
 interface FormsPageProps {
     onSubmit: (test: TestEntry) => void;
     onCancel: () => void;
+    readOnly?: boolean;
+    initialData?: Partial<CustomFormData>;
 }
 
 const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
