@@ -4,7 +4,7 @@ import { Device, DeviceType } from './types/DeviceInfoTypes';
 import { Event } from './types/EventInfoTypes';
 import { AdditionalFile } from './types/OtherFilesTypes';
 
-const API_BASE_URL = 'http://10.200.10.219:5000';
+const API_BASE_URL = 'http://192.168.1.106:5000';
 
 export const postLogsUpload = async (
     files: UploadingFile[],

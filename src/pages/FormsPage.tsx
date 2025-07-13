@@ -17,9 +17,10 @@ interface FormsPageProps {
     onCancel: () => void;
     readOnly?: boolean;
     initialData?: Partial<CustomFormData>;
+    onDeleteExperiment: (id: string) => Promise<void>; // Добавляем пропс
 }
 
-const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
+const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExperiment }) => { // Принимаем onDeleteExperiment
     const [currentStep, setCurrentStep] = useState<number>(1);
     const [createdExperimentId, setcreatedExperimentId] = useState<
         number | null
@@ -366,6 +367,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                     onFilesUploaded={onFilesUploaded}
                     uploadedFiles={formData.files}
                     experimentId={formData.experiment.experimentId}
+                    onDeleteExperiment={onDeleteExperiment}
                 />
             ) : currentStep === 3 ? (
                 <DevicesForm
@@ -386,6 +388,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                     markFieldAsTouched={markFieldAsTouched}
                     validateStep={() => validateStep(3)}
                     experimentId={formData.experiment.experimentId}
+                    onDeleteExperiment={onDeleteExperiment} // Передаем функцию удаления
                 />
             ) : currentStep === 4 ? (
                 <EventInfo
@@ -407,6 +410,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                     markFieldAsTouched={markFieldAsTouched}
                     validateStep={() => validateStep(4)}
                     experimentId={formData.experiment.experimentId}
+                    onDeleteExperiment={onDeleteExperiment} 
                 />
             ) : currentStep === 5 ? (
                 <OtherFiles
@@ -421,6 +425,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel }) => {
                     validateStep={() => validateStep(5)}
                     onChange={handleotherFilesChange}
                     experimentId={formData.experiment.experimentId}
+                    onDeleteExperiment={onDeleteExperiment}
                 />
             ) : null}
         </Container>

@@ -3,6 +3,7 @@ import { Button, Card, Container, Spinner } from 'react-bootstrap';
 import { Event, EventInfoProps } from '../../types/EventInfoTypes';
 import EventItem from './EventItem';
 import { saveEventInfo } from '../../api';
+import { handleCancel, handleCancelWithDelete } from '../../utils/handleCancel';
 
 const EventInfo: React.FC<EventInfoProps> = ({
     experimentId,
@@ -14,6 +15,7 @@ const EventInfo: React.FC<EventInfoProps> = ({
     shouldHighlightError,
     markFieldAsTouched,
     validateStep,
+    onDeleteExperiment,
 }) => {
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,11 +118,11 @@ const EventInfo: React.FC<EventInfoProps> = ({
 
                 <div className="d-flex justify-content-between">
                     <Button
-                        variant="outline-secondary"
-                        onClick={onBack}
+                        variant="danger"
+                        onClick={() => handleCancelWithDelete(experimentId, onDeleteExperiment)}
                         disabled={isSubmitting}
                     >
-                        Назад
+                        Отменить
                     </Button>
                     <Button
                         variant="primary"

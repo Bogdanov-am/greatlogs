@@ -3,6 +3,7 @@ import { Container, Card, Button } from 'react-bootstrap';
 import { ExperimentInfoProps } from '../../types/ExperimentInfoTypes';
 import ExperimentBaseForm from './ExperimentBaseForm';
 import { getLocations, getOperators, saveExperimentInfo } from '../../api';
+import { handleCancel } from '../../utils/handleCancel';
 
 const ExperimentInfo: React.FC<ExperimentInfoProps> = ({
     data,
@@ -17,16 +18,6 @@ const ExperimentInfo: React.FC<ExperimentInfoProps> = ({
         operators: true,
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const handleCancel = () => {
-        if (
-            window.confirm(
-                'Вы уверены, что хотите отменить создание испытания? Все введенные данные будут потеряны.'
-            )
-        ) {
-            localStorage.removeItem('experimentForm');
-            window.location.href = '/';
-        }
-    };
 
     const handleNextWithSave = async () => {
         setIsSubmitting(true);

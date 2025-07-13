@@ -20,6 +20,7 @@ export interface OtherFilesProps {
     onChange: (data: OtherFilesData) => void;
     clearTouchedFieldsByPrefix: (prefix: string) => void;
     experimentId?: number;
+    onDeleteExperiment: (id: string) => Promise<void>;
 }
 
 export interface FileInputRowProps {

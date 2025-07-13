@@ -5,6 +5,8 @@ import RecordingsSection from './RecordingsSection';
 import AttachmentsSection from './AttachmentsSection';
 import { OtherFilesProps, AdditionalFile } from '../../types/OtherFilesTypes';
 import { saveOtherFiles } from '../../api';
+import { handleCancel } from '../../utils/handleCancel';
+import { handleCancelWithDelete } from '../../utils/handleCancel';
 
 const OtherFiles: React.FC<OtherFilesProps> = ({
     experimentId,
@@ -16,6 +18,7 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
     onChange,
     clearTouchedFieldsByPrefix,
     validateStep,
+    onDeleteExperiment
 }) => {
     const [screenshots, setScreenshots] = useState<AdditionalFile[]>(
         initialData?.screenshots ?? []
@@ -171,11 +174,11 @@ const OtherFiles: React.FC<OtherFilesProps> = ({
                 </Card.Body>
                 <div className="d-flex justify-content-between pt-3 p-4">
                     <Button
-                        variant="outline-secondary"
-                        onClick={onBack}
+                        variant="danger"
+                        onClick={() => handleCancelWithDelete(experimentId, onDeleteExperiment)}
                         size="lg"
                     >
-                        Назад
+                        Отменить
                     </Button>
                     <Button
                         variant="primary"

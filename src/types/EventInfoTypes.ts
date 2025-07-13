@@ -28,6 +28,7 @@ export interface EventInfoProps {
     markFieldAsTouched: (fieldName: string) => void;
     validateStep: () => boolean;
     experimentId?: number;
+    onDeleteExperiment: (id: string) => Promise<void>;
 }
 
 export interface EventTimeInputProps {

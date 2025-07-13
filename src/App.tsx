@@ -32,10 +32,10 @@ function App() {
         navigate('/');
     };
 
-    const handleDeleteTest = async (id: string) => {
+    const handleDeleteExperiment = async (id: string) => {
         try {
             const response = await fetch(
-                `http://10.200.10.219:5000/api/experiments/${id}`,
+                `http://192.168.1.106:5000/api/experiments/${id}`,
                 {
                     method: 'DELETE',
                 }
@@ -68,7 +68,7 @@ function App() {
                         <HomePage
                             tests={tests}
                             onAddTestClick={handleAddTest}
-                            onDeleteTest={handleDeleteTest}
+                            onDeleteExperiment={handleDeleteExperiment}
                         />
                     }
                 />
@@ -78,6 +78,7 @@ function App() {
                         <FormsPage
                             onSubmit={handleTestCreated}
                             onCancel={() => navigate('/')}
+                            onDeleteExperiment={handleDeleteExperiment} // Передаем функцию удаления
                         />
                     }
                 />

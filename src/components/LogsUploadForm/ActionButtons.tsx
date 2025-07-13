@@ -3,8 +3,8 @@ import { Row, Col, Button } from "react-bootstrap";
 import { ActionButtonsProps } from "../../types/LogsUploadTypes";
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
-    onBack,
     onCancel,
+    onCancelLogs,
     onNext,
     isNextDisabled,
     hasFiles,
@@ -12,19 +12,18 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
     <Row>
         <Col>
             <Button
-                variant="outline-secondary"
+                variant="danger"
                 className="mt-3 w-100"
-                onClick={onBack}
-                // disabled={!hasFiles}
+                onClick={onCancel}
             >
-                Назад
+                Отменить
             </Button>
         </Col>
         <Col>
             <Button
                 variant="outline-danger"
                 className="mt-3 w-100"
-                onClick={onCancel}
+                onClick={onCancelLogs}
                 disabled={!hasFiles}
             >
                 Стереть
@@ -34,7 +33,6 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
             <div className="d-flex justify-content-end">
                 <Button
                     variant="primary"
-                    // disabled={isNextDisabled}
                     className="mt-3 w-100"
                     onClick={onNext}
                 >

@@ -6,6 +6,7 @@ import FileDropZone from './FileDropZone';
 import UploadedFilesList from './UploadedFilesList';
 import ActionButtons from './ActionButtons';
 import { postLogsUpload } from '../../api'; // Добавьте этот импорт
+import { handleCancelWithDelete } from '../../utils/handleCancel';
 
 const LogsUpload: React.FC<LogsUploadProps> = ({
     experimentId,
@@ -13,6 +14,7 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
     onNext,
     onFilesUploaded,
     uploadedFiles = [],
+    onDeleteExperiment
 }) => {
     const [files, setFiles] = useState<UploadingFile[]>(() => {
         return uploadedFiles.map((file) => ({
@@ -130,6 +132,20 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
         onNext();
     };
 
+    // const handleCancelWithDelete = async () => {
+    //     if (
+    //         window.confirm(
+    //             'Вы уверены, что хотите отменить создание испытания? Все введенные данные будут потеряны.'
+    //         )
+    //     ) {
+    //         if (experimentId) {
+    //             await onDeleteExperiment(experimentId.toString()); // Вызываем onDeleteExperiment
+    //         }
+    //         localStorage.removeItem('experimentForm');
+    //         window.location.href = '/';
+    //     }
+    // };
+
     return (
         <Container
             className="mt-5"
@@ -182,8 +198,8 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
             <ActionButtons
                 hasFiles={files.length > 0}
                 isNextDisabled={files.some((f) => f.status !== 'completed')}
-                onBack={onBack}
-                onCancel={cancelAll}
+                onCancel={() => handleCancelWithDelete(experimentId, onDeleteExperiment)}
+                onCancelLogs={cancelAll}
                 onNext={handleNextClick}
             />
         </Container>

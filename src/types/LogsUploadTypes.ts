@@ -18,6 +18,7 @@ export interface LogsUploadProps {
    onFilesUploaded: (files: UploadFile[]) => void;
    uploadedFiles: UploadFile[];
    experimentId?: number;
+   onDeleteExperiment: (id: string) => Promise<void>;
 }
 
 export interface UploadedFilesListProps {
@@ -33,8 +34,8 @@ export interface FileDropZoneProps {
 }
 
 export interface ActionButtonsProps {
-   onBack: () => void;
    onCancel: () => void;
+   onCancelLogs: () => void;
    onNext: () => void;
    isNextDisabled: boolean;
    hasFiles: boolean;

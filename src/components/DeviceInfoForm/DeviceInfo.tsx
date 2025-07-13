@@ -4,6 +4,7 @@ import { Device } from '../../types/DeviceInfoTypes';
 import DeviceItem from './DeviceItem';
 import { getMavlinkSysIds, saveDevicesInfo } from '../../api'; // Добавляем новый метод API
 import { DevicesFormProps } from '../../types/DeviceInfoTypes';
+import { handleCancelWithDelete } from '../../utils/handleCancel';
 
 const DevicesInfo: React.FC<DevicesFormProps> = ({
     experimentId,
@@ -14,6 +15,7 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
     shouldHighlightError,
     markFieldAsTouched,
     validateStep,
+    onDeleteExperiment, // Принимаем функцию удаления
 }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -79,6 +81,21 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
         }
     };
 
+    // Новая функция для обработки отмены с удалением эксперимента
+    // const handleCancelWithDelete = async () => {
+    //     if (
+    //         window.confirm(
+    //             'Вы уверены, что хотите отменить создание испытания? Все введенные данные будут потеряны.'
+    //         )
+    //     ) {
+    //         if (experimentId) {
+    //             await onDeleteExperiment(experimentId.toString()); // Вызываем onDeleteExperiment
+    //         }
+    //         localStorage.removeItem('experimentForm');
+    //         window.location.href = '/';
+    //     }
+    // };
+
     if (loading) {
         return (
             <Container className="text-center my-4">
@@ -130,12 +147,12 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
                 </div>
                 <div className="d-flex justify-content-between">
                     <Button
-                        variant="outline-secondary"
-                        onClick={onBack}
+                        variant="danger"
+                        onClick={() => handleCancelWithDelete(experimentId, onDeleteExperiment)}
                         disabled={isSubmitting}
                         size="lg"
                     >
-                        Назад
+                        Отменить
                     </Button>
                     <Button
                         variant="primary"

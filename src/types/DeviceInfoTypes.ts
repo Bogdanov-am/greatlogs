@@ -26,6 +26,7 @@ export interface DevicesFormProps {
     markFieldAsTouched: (field: string) => void;
     validateStep: () => boolean;
     experimentId?: number;
+    onDeleteExperiment: (id: string) => Promise<void>;
 }
 
 export interface DeviceFileUploadProps {

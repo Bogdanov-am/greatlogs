@@ -7,13 +7,13 @@ import ExperimentCard from '../components/ExperimentCard';
 interface HomePageProps {
     tests: TestEntry[];
     onAddTestClick: () => void;
-    onDeleteTest: (id: string) => void;
+    onDeleteExperiment: (id: string) => void;
 }
 
 const HomePage: React.FC<HomePageProps> = ({
     tests,
     onAddTestClick,
-    onDeleteTest,
+    onDeleteExperiment,
 }) => {
     const navigate = useNavigate();
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
@@ -35,7 +35,7 @@ const HomePage: React.FC<HomePageProps> = ({
         try {
             console.log(`Fetching /api/experiment/${experimentId}`);
             const response = await fetch(
-                `http://10.200.10.219:5000/api/experiment/${experimentId}`
+                `http://192.168.1.106:5000/api/experiment/${experimentId}`
             );
             console.log('Response status: ', response.status);
 
@@ -114,7 +114,7 @@ const HomePage: React.FC<HomePageProps> = ({
                                         description={cardData.description}
                                         location={cardData.location}
                                         equipment={cardData.equipment}
-                                        onDelete={() => onDeleteTest(test.id)}
+                                        onDelete={() => onDeleteExperiment(test.id)}
                                         onView={() =>
                                             handleViewExperiment(test)
                                         }
