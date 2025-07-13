@@ -1,7 +1,6 @@
 from .app_db import ma
 from .models import *
 
-
 class ExperimentSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Experiment
@@ -48,30 +47,34 @@ class ExperimentAttachmentSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = ExperimentAttachment
         load_instance = True
+        include_fk = True
 
 
 class ExperimentDeviceSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = ExperimentDevice      
         load_instance = True
+        include_fk = True
 
 
 class ExperimentOperatorRecordSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = ExperimentOperatorRecord       
         load_instance = True
+        include_fk = True
 
 
 class ExperimentOperatorScreenshotSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = ExperimentOperatorScreenshot       
         load_instance = True
+        include_fk = True
 
 
 class ExperimentOperatorsSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = ExperimentOperators     
-        load_instance = True
+        include_fk = True
 
 
 class LogDevicesSchema(ma.SQLAlchemyAutoSchema):
@@ -84,16 +87,23 @@ class DeviceRecordSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = DeviceRecord    
         load_instance = True
+        include_fk = True
 
 
 class EventDeviceSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = EventDevice   
         load_instance = True
+        include_fk = True
 
 
 class ExperimentLocationSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = ExperimentLocation   
-        load_instance = True
+        include_fk = True
 
+class ParametresSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Parametres
+        load_instance = True
+        include_fk = True
