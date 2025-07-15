@@ -4,7 +4,7 @@ import { Device, DeviceType } from './types/DeviceInfoTypes';
 import { Event } from './types/EventInfoTypes';
 import { AdditionalFile } from './types/OtherFilesTypes';
 
-const API_BASE_URL = 'http://192.168.1.106:5000';
+const API_BASE_URL = 'http://10.200.10.219:5000';
 
 export const postLogsUpload = async (
     files: UploadingFile[],
@@ -378,7 +378,7 @@ export const saveEventInfo = async (events: Event[], experimentId?: number) => {
 
         const eventResponses = await Promise.all(
             events.map(async (event) => {
-                // 1. Сначала сохраняем основную информацию о событии
+                const formattedTime = event.time.replace('T', ' ');
                 const eventResponse = await fetch(`${API_BASE_URL}/events`, {
                     method: 'POST',
                     headers: {
@@ -386,7 +386,7 @@ export const saveEventInfo = async (events: Event[], experimentId?: number) => {
                     },
                     body: JSON.stringify({
                         description: event.description,
-                        event_time: event.time,
+                        event_time: formattedTime,
                         experiment_id: experimentId,
                     }),
                 });
@@ -398,7 +398,6 @@ export const saveEventInfo = async (events: Event[], experimentId?: number) => {
                 const responseData = await eventResponse.json();
                 console.log('Успешная отправка времени события и его описания');
 
-                // 2. Обрабатываем привязку устройств, если они есть
                 if (event.deviceIds && event.deviceIds.length > 0) {
                     await Promise.all(
                         event.deviceIds.map(async (mavlinkSysIdStr) => {

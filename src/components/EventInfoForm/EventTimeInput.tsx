@@ -13,11 +13,11 @@ const EventTimeInput: React.FC<EventTimeInputProps> = ({
             <h6>Время события</h6>
         </Form.Label>
         <Form.Control
-            type="time"
+            type="datetime-local"
             value={time}
             onChange={(e) => onChange(e.target.value)}
             onBlur={onBlur}
-            style={{ border: shouldHighlightError ? "1px solid red" : "" }}
+            style={{ border: shouldHighlightError ? '1px solid red' : '' }}
             required
         />
     </Form.Group>

@@ -4,6 +4,8 @@ import { TestEntry } from '../types/PagesTypes';
 import { useNavigate } from 'react-router-dom';
 import ExperimentCard from '../components/ExperimentCard';
 
+const API_BASE_URL = 'http://10.200.10.219:5000';
+
 interface HomePageProps {
     tests: TestEntry[];
     onAddTestClick: () => void;
@@ -35,7 +37,7 @@ const HomePage: React.FC<HomePageProps> = ({
         try {
             console.log(`Fetching /api/experiment/${experimentId}`);
             const response = await fetch(
-                `http://192.168.1.106:5000/api/experiment/${experimentId}`
+                `${API_BASE_URL}/api/experiment/${experimentId}`
             );
             console.log('Response status: ', response.status);
 

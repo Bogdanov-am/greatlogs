@@ -11,6 +11,7 @@ import { StoredUploadFile } from '../types/LogsUploadTypes';
 import { AdditionalFile } from '../types/OtherFilesTypes';
 import { usePersistForm } from '../hooks/usePresistForm';
 import { checkStorageLimit } from '../utils/storage';
+import { getCurrentStep, setCurrentStep as persistCurrentStep } from '../utils/storage'
 
 interface FormsPageProps {
     onSubmit: (test: TestEntry) => void;
@@ -21,7 +22,7 @@ interface FormsPageProps {
 }
 
 const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExperiment }) => { // Принимаем onDeleteExperiment
-    const [currentStep, setCurrentStep] = useState<number>(1);
+    const [currentStep, setCurrentStep] = useState<number>(getCurrentStep());
     const [createdExperimentId, setcreatedExperimentId] = useState<
         number | null
     >(null);
@@ -33,7 +34,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
                 experimentDate: '',
                 locations: '',
                 description: '',
-                hasEvents: false,
+                // hasEvents: false,
                 reportFile: null,
                 operators: [],
                 availableLocations: [],
@@ -46,11 +47,11 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
             },
             devices: [],
             events: [
-                {
-                    time: '',
-                    description: '',
-                    deviceIds: [],
-                },
+                // {
+                //     time: '',
+                //     description: '',
+                //     deviceIds: [],
+                // },
             ],
             otherFiles: {
                 screenshots: [],
@@ -63,6 +64,10 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
     const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>(
         {}
     );
+
+    useEffect(() => {
+        persistCurrentStep(currentStep);
+    }, [currentStep]);
 
     useEffect(() => {
         const handler = (e: StorageEvent) => {
@@ -80,7 +85,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
 
     const validateStep = (step: number): boolean => {
         switch (step) {
-            case 1: // ExperimentInfo
+            case 1:
                 const {
                     experimentDate,
                     selectedLocation,
@@ -120,7 +125,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
                 );
 
             case 4: // EventsInfo
-                if (!formData.experiment.hasEvents) return true;
+                // if (!formData.experiment.hasEvents) return true;
                 const allEventsInfoFields = formData.events.every(
                     (event) =>
                         event.time.trim() !== '' &&
@@ -209,8 +214,6 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
                     alert('Пожалуйста заполните все поля');
                     return;
                 }
-
-                setCurrentStep((prev) => prev + 1);
             } catch (error) {
                 console.error('Error saving experiment:', error);
                 let errorMessage = 'Failed to save experiment data';
@@ -224,11 +227,14 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
         } else {
             if (currentStep === 4) {
                 // EventInfo
-                formData.events.forEach((_, index) => {
-                    ['time', 'description'].forEach((field) => {
-                        newTouched[`events[${index}].${field}`] = true;
+                if (formData.events.length > 0) {
+                    formData.events.forEach((_, index) => {
+                        ['time', 'description'].forEach((field) => {
+                            newTouched[`events[${index}].${field}`] = true;
+                        });
                     });
-                });
+                }
+
             }
 
             setTouchedFields((prev) => ({ ...prev, ...newTouched }));
@@ -236,13 +242,8 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
             if (!validateStep(currentStep)) {
                 return;
             }
-
-            if (currentStep === 3 && !formData.experiment.hasEvents) {
-                setCurrentStep((prev) => prev + 2);
-            } else {
-                setCurrentStep((prev) => prev + 1);
-            }
         }
+        setCurrentStep((prev) => prev + 1);
     };
 
     const handleSubmit = () => {
@@ -287,6 +288,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
 
         onSubmit(newTest); // Передаем данные в App
         localStorage.removeItem('experimentForm');
+        localStorage.removeItem('currentStep');
         onCancel();
     };
 
@@ -415,9 +417,7 @@ const FormsPage: React.FC<FormsPageProps> = ({ onSubmit, onCancel, onDeleteExper
             ) : currentStep === 5 ? (
                 <OtherFiles
                     onSubmit={handleSubmit}
-                    onBack={() =>
-                        setCurrentStep(formData.experiment.hasEvents ? 4 : 3)
-                    }
+                    onBack={() => setCurrentStep(4)}
                     initialData={formData.otherFiles}
                     shouldHighlightError={shouldHighlightError}
                     markFieldAsTouched={markFieldAsTouched}

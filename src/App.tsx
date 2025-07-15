@@ -12,6 +12,8 @@ import { useState, useEffect } from 'react';
 import { TestEntry } from './types/PagesTypes';
 import './App.css';
 
+const API_BASE_URL = 'http://10.200.10.219:5000';
+
 function App() {
     const [tests, setTests] = useState<TestEntry[]>(() => {
         const saved = localStorage.getItem('tests');
@@ -35,7 +37,7 @@ function App() {
     const handleDeleteExperiment = async (id: string) => {
         try {
             const response = await fetch(
-                `http://192.168.1.106:5000/api/experiments/${id}`,
+                `${API_BASE_URL}/api/experiments/${id}`,
                 {
                     method: 'DELETE',
                 }
@@ -48,16 +50,17 @@ function App() {
                 );
             }
 
-            // Удаляем из локального хранилища только после успешного удаления на сервере
             const updatedTests = tests.filter((test) => test.id !== id);
             setTests(updatedTests);
         } catch (err) {
             console.error('Ошибка при удалении эксперимента:', err);
-            // Можно добавить toast-уведомление или Alert
-            alert(err instanceof Error ? err.message : 'Неизвестная ошибка при удалении эксперимента');
+            alert(
+                err instanceof Error
+                    ? err.message
+                    : 'Неизвестная ошибка при удалении эксперимента'
+            );
         }
     };
-
 
     return (
         <div className="App">

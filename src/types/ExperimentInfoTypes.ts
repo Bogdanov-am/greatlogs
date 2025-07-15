@@ -3,7 +3,7 @@ export interface ExperimentInfoProps {
         experimentDate: string;
         locations: string;
         description: string;
-        hasEvents: boolean;
+        // hasEvents: boolean;
         reportFile: File | null;
         operators: Operator[];
         availableLocations: SelectItem[];

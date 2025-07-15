@@ -37,3 +37,12 @@ export const safeSet = (key: string, value: unknown): boolean => {
         return false;
     }
 };
+
+
+export const getCurrentStep = (): number => {
+    return safeGet<number>('currentStep') ?? 1;
+}
+
+export const setCurrentStep = (step: number): boolean => {
+    return safeSet('currentStep', step);
+}

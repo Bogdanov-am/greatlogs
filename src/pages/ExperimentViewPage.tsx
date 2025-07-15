@@ -17,6 +17,8 @@ import {
 } from 'react-bootstrap';
 import { ExperimentDetails } from '../types/PagesTypes';
 
+const API_BASE_URL = 'http://10.200.10.219:5000';
+
 const ExperimentViewPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -30,7 +32,7 @@ const ExperimentViewPage: React.FC = () => {
         const fetchExperiment = async () => {
             try {
                 const response = await fetch(
-                    `http://10.200.10.219:5000/api/all-experiment-data/${id}`
+                    `${API_BASE_URL}/api/all-experiment-data/${id}`
                 );
                 if (!response.ok) throw new Error('Ошибка загрузки данных');
                 const data = await response.json();

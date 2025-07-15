@@ -71,8 +71,9 @@ const EventInfo: React.FC<EventInfoProps> = ({
                     'Заполните все обязательные поля для каждого добавленного события'
                 );
             }
-
-            await saveEventInfo(events, experimentId);
+            if (events.length > 0) {
+                await saveEventInfo(events, experimentId);
+            }            
             onNext();
         } catch (error) {
             console.error('Ошибка сохранения:', error);
@@ -99,7 +100,7 @@ const EventInfo: React.FC<EventInfoProps> = ({
                             devices={devices}
                             onChange={updateEvent}
                             onRemove={removeEvent}
-                            showRemoveButton={events.length > 1}
+                            showRemoveButton={events.length > 0}
                             handleDeviceSelection={handleDeviceSelection}
                             shouldHighlightError={shouldHighlightError}
                             markFieldAsTouched={markFieldAsTouched}

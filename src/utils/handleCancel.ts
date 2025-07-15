@@ -5,6 +5,7 @@ export const handleCancel = () => {
             )
         ) {
             localStorage.removeItem('experimentForm');
+            localStorage.removeItem('currentStep');
             window.location.href = '/';
         }
 };
@@ -26,6 +27,7 @@ export const handleCancelWithDelete = async (
             }
         }
         localStorage.removeItem('experimentForm');
+        localStorage.removeItem('currentStep');
         window.location.href = '/';
     }
 };

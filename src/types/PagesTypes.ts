@@ -25,7 +25,7 @@ export interface CustomFormData {
         experimentDate: string;
         locations: string;
         description: string;
-        hasEvents: boolean;
+        // hasEvents: boolean;
         reportFile: File | null;
         operators: Operator[];
         availableLocations: SelectItem[]; // Доступные локации
