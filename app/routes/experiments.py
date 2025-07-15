@@ -15,12 +15,10 @@ experiment_schema = ExperimentSchema()
 
 @bp.route('', methods=['POST'])
 def create_experiment():
-    # Проверяем Content-Type
     if not request.content_type or 'multipart/form-data' not in request.content_type:
         return jsonify({"error": "Content-Type must be multipart/form-data"}), 415
     
     try:
-        # Проверяем обязательные поля как на фронтенде
         errors = []
         
         if 'file' not in request.files or not request.files['file']:

@@ -12,16 +12,54 @@ bp = Blueprint('devices', __name__, url_prefix='/devices')
 
 device_schema = DeviceSchema()
 
-# devices_schema = DeviceSchema(many=True)
-
 @bp.route('', methods=['GET'])
 def share_device():
-    file_log = db.session.query(LogFile).order_by(LogFile.file_path.desc()).first()
-    print(file_log.file_path)
-    messages, msg_ids = fasttlogparser.parseTLog(file_log.file_path)
-    mavlink_system_id = list(msg_ids.keys())
-    print(mavlink_system_id)
-    return jsonify({"mavlink_system_id":mavlink_system_id})
+    experiment_id = request.args.get('experiment_id')
+    
+    if not experiment_id:
+        return jsonify({"error": "Experiment ID is required"}), 400
+
+    experiment_id = int(experiment_id)
+
+    log_files = (
+        db.session.query(LogFile)
+        .filter(LogFile.experiment_id == experiment_id)
+        .all()
+    )
+    
+    if not log_files:
+        return jsonify({"error": "No log files found for this experiment"}), 404
+    
+    device_nums = {}
+
+    for log_file in log_files:
+        try:
+            messages, msg_ids = fasttlogparser.parseTLog(
+                path = log_file.file_path,
+                whitelist = ["PARAM_SET", "PARAM_VALUE"])
+
+            current_device_nums = {sys_id:0 for sys_id in msg_ids.keys() if sys_id < 250}
+
+            if "PARAM_SET" in messages:
+                for i in range(0, len(messages["PARAM_SET"]['param_id'])):
+                    if messages["PARAM_SET"]['param_id'][i] == b'BRD_SERIAL_NUM':
+                        current_device_nums[messages["PARAM_SET"]['target_system'][i]] = int(messages["PARAM_SET"]['param_value'][i])
+
+            if "PARAM_VALUE" in messages:
+                for i in range(0, len(messages["PARAM_VALUE"]['param_id'])):
+                    if messages["PARAM_VALUE"]['param_id'][i] == b'BRD_SERIAL_NUM':
+                        current_device_nums[messages["PARAM_VALUE"]['sys_id'][i]] = int(messages["PARAM_VALUE"]['param_value'][i])
+
+            print('current_device_nums', current_device_nums)
+            device_nums.update(current_device_nums)
+
+        except Exception as e:
+            print(f"Error parsing log file {log_file.file_path}: {str(e)}")
+            continue
+    
+    print('device_nums: ', device_nums)
+    return jsonify(device_nums)
+
 
 @bp.route('', methods=['POST'])
 def create_device():
@@ -36,18 +74,30 @@ def create_device():
     if 'mavlink_system_id' not in data:
         return jsonify({"error": "Нет типа аппарата"}), 400
     
-    try:
-        last_experiment = db.session.query(Experiment).order_by(Experiment.experiment_id.desc()).first()
-        
-        if not last_experiment:
-            return jsonify({"error": "No experiments available"}), 400
+    if 'serial_number' not in data:
+        return jsonify({"error": "Нет серийного номера"}), 400
+    
+    try:    
+        existing_device = db.session.query(Device).filter(
+            Device.device_type == data['device_type'],
+            Device.serial_number == data['serial_number'],
+            Device.mavlink_system_id == data['mavlink_system_id']
+        ).first()
+
+        if existing_device:
+            return jsonify({
+                'device_id': existing_device.device_id,
+                'message': 'Device already exists'
+            }), 200
+
 
         device_data = {
             'device_type': data['device_type'],
-            'serial_number': 123,
+            'serial_number': data['serial_number'],
             'mavlink_system_id': data['mavlink_system_id'],
         }
-        
+        print(device_data)
+
         errors = device_schema.validate(device_data)
         if errors:
             return jsonify({"error": errors}), 400
@@ -59,6 +109,7 @@ def create_device():
 
         response_data = {
             'device_id': device.device_id,
+            
         }
         
         return jsonify(response_data), 201

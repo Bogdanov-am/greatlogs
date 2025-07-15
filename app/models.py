@@ -36,7 +36,7 @@ class Event(db.Model):
     event_id = db.Column(db.Integer, primary_key=True, nullable=False)
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.experiment_id'), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    event_time = db.Column(db.Time, nullable=False)
+    event_time = db.Column(db.DateTime, nullable=False)
 
     event_devices = db.relationship('EventDevice', backref='event', lazy=True)
 

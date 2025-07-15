@@ -25,7 +25,7 @@ def create_event():
         experiment_id = data['experiment_id']
         
         try:
-            event_time = datetime.strptime(data['event_time'], '%H:%M').time()
+            event_time = datetime.strptime(data['event_time'], '%Y-%m-%d %H:%M')
         except:
             return jsonify({"error": "Неверный формат датыю. Используйте HH:MM"}), 400
         
