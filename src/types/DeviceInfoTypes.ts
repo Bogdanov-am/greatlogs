@@ -5,6 +5,7 @@ export enum DeviceType {
 
 export interface Device {
     mavlinkSysId: string;
+    serialNumber: number;
     deviceType: DeviceType
     onboardVideos: File[];
     parametersFiles: File[];

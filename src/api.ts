@@ -195,25 +195,20 @@ export const saveExperimentInfo = async (data: {
     }
 };
 
-export const getMavlinkSysIds = async (): Promise<Device[]> => {
+export const getDevices = async (experimentId: number): Promise<Device[]> => {
     try {
-        const response = await fetch(`${API_BASE_URL}/devices`);
+        const response = await fetch(`${API_BASE_URL}/devices?experiment_id=${experimentId}`);
 
         if (!response.ok) {
             throw new Error('Ошибка получения данных устройств');
         }
         const data = await response.json();
-
-        if (
-            !data?.mavlink_system_id ||
-            !Array.isArray(data.mavlink_system_id)
-        ) {
-            console.error('Неверный формат данных:', data);
-            return [];
-        }
+        console.log(data)
         console.log('Список аппаратов получен');
-        return data.mavlink_system_id.map((sys_id: number) => ({
-            mavlinkSysId: sys_id.toString(),
+        
+        return Object.entries(data).map(([mavlinkSysId, serialNumber]) => ({
+            mavlinkSysId: mavlinkSysId.toString(),
+            serialNumber: Number(serialNumber),
             deviceType: DeviceType.ORKAN,
             onboardVideos: [],
             parametersFiles: [],
@@ -241,20 +236,18 @@ export const saveDevicesInfo = async (
                     body: JSON.stringify({
                         device_type: device.deviceType,
                         mavlink_system_id: device.mavlinkSysId,
+                        serial_number: device.serialNumber
                     }),
                 });
 
                 if (!deviceResponse.ok) {
                     throw new Error('Ошибка сохранения device type и sys_id');
                 }
-                console.log('Успешная отправка device type и sys_id');
+                console.log('Успешная отправка device type, serial_number и sys_id');
                 const deviceData = await deviceResponse.json();
 
                 const experimentDeviceData = new FormData();
-                experimentDeviceData.append(
-                    'experiment_id',
-                    experimentId.toString()
-                );
+                experimentDeviceData.append('experiment_id', experimentId.toString());
                 experimentDeviceData.append('device_id', deviceData.device_id);
 
                 const experimentDeviceResponse = await fetch(
@@ -264,6 +257,15 @@ export const saveDevicesInfo = async (
                         body: experimentDeviceData,
                     }
                 );
+
+                if (!experimentDeviceResponse.ok) {
+                    throw new Error('Ошибка сохранения в experimentDevice');
+                }
+                console.log('Успешная отправка в experimentDevice');
+
+                const logDeviceData = new FormData();
+                logDeviceData.append('log_id', experimentId.toString());
+                logDeviceData.append('device_id', deviceData.device_id);
 
                 if (device.onboardVideos.length > 0) {
                     const videoFormData = new FormData();

@@ -82,8 +82,9 @@ const LogsUpload: React.FC<LogsUploadProps> = ({
         );
 
         try {
-            const result = await postLogsUpload(filesToUpload, experimentId); // Ждём ответа
-
+            const result = await postLogsUpload(filesToUpload, experimentId);
+            console.log(result);
+            
             setFiles((prev) =>
                 prev.map((f) =>
                     filesToUpload.some((uploadFile) => uploadFile.id === f.id)

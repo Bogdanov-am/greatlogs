@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import { Device, DeviceType } from '../../types/DeviceInfoTypes';
 
@@ -15,9 +15,26 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
     shouldHighlightError,
     handleBlur,
 }) => {
+    const [isInitialZero, setIsInitialZero] = useState(
+        device.serialNumber === 0
+    );
+
+    const handleSerialNumberChange = (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const value = e.target.value;
+        // Разрешаем пустую строку или число
+        if (value === '' || /^\d+$/.test(value)) {
+            onChange({
+                ...device,
+                serialNumber: value === '' ? 0 : parseInt(value, 10),
+            });
+        }
+    };
+
     return (
         <Row>
-            <Col md={6}>
+            <Col md={4}>
                 <Form.Group className="mb-3">
                     <Form.Label>
                         <h6>MAVLink SYS_ID</h6>
@@ -31,7 +48,39 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
                     />
                 </Form.Group>
             </Col>
-            <Col md={6}>
+
+            <Col md={4}>
+                <Form.Group className="mb-3">
+                    <Form.Label>
+                        <h6>Серийный номер</h6>
+                    </Form.Label>
+                    {isInitialZero ? (
+                        <Form.Control
+                            type="text"
+                            value={
+                                device.serialNumber === 0
+                                    ? ''
+                                    : device.serialNumber.toString()
+                            }
+                            onChange={handleSerialNumberChange}
+                            onBlur={() => handleBlur('serialNumber')}
+                            size="sm"
+                            pattern="\d*"
+                            placeholder="Введите серийный номер"
+                        />
+                    ) : (
+                        <Form.Control
+                            type="text"
+                            value={device.serialNumber.toString()}
+                            readOnly
+                            plaintext
+                            className="form-control-plaintext"
+                        />
+                    )}
+                </Form.Group>
+            </Col>
+
+            <Col md={4}>
                 <Form.Group className="mb-3">
                     <Form.Label>
                         <h6>Тип аппарата</h6>

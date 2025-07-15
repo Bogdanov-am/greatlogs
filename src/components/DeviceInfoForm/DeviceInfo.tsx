@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Container, Spinner, Button } from 'react-bootstrap';
 import { Device } from '../../types/DeviceInfoTypes';
 import DeviceItem from './DeviceItem';
-import { getMavlinkSysIds, saveDevicesInfo } from '../../api'; // Добавляем новый метод API
+import { getDevices, saveDevicesInfo } from '../../api';
 import { DevicesFormProps } from '../../types/DeviceInfoTypes';
 import { handleCancelWithDelete } from '../../utils/handleCancel';
 
@@ -23,24 +23,45 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
 
     useEffect(() => {
         const loadDevices = async () => {
+            if (!experimentId) {
+                setError('Experiment ID is missing');
+                setLoading(false);
+                return;
+            }
+
             try {
                 setLoading(true);
-                const devicesData = await getMavlinkSysIds();
-                onChange(devicesData);
+                const devicesData = await getDevices(experimentId);
+
+                const uniqueDevices = devicesData.filter(
+                    (device, index, self) =>
+                        index ===
+                        self.findIndex(
+                            (d) => d.mavlinkSysId === device.mavlinkSysId
+                        )
+                );
+
+                const currentIds = devices.map((d) => d.mavlinkSysId);
+                const newIds = uniqueDevices.map((d) => d.mavlinkSysId);
+
+                if (
+                    currentIds.length !== newIds.length ||
+                    !currentIds.every((id) => newIds.includes(id))
+                ) {
+                    onChange(uniqueDevices);
+                }
+
                 setError(null);
             } catch (err) {
-                setError('Не удалось загрузить список устройств');
+                setError('Failed to load devices');
+                console.error('Device loading error:', err);
             } finally {
                 setLoading(false);
             }
         };
 
-        if (devices.length === 0) {
-            loadDevices();
-        } else {
-            setLoading(false);
-        }
-    }, []);
+        loadDevices();
+    }, [experimentId]);
 
     const updateDevice = (index: number, device: Device) => {
         const newDevices = [...devices];
@@ -80,21 +101,6 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
             setIsSubmitting(false);
         }
     };
-
-    // Новая функция для обработки отмены с удалением эксперимента
-    // const handleCancelWithDelete = async () => {
-    //     if (
-    //         window.confirm(
-    //             'Вы уверены, что хотите отменить создание испытания? Все введенные данные будут потеряны.'
-    //         )
-    //     ) {
-    //         if (experimentId) {
-    //             await onDeleteExperiment(experimentId.toString()); // Вызываем onDeleteExperiment
-    //         }
-    //         localStorage.removeItem('experimentForm');
-    //         window.location.href = '/';
-    //     }
-    // };
 
     if (loading) {
         return (
@@ -148,7 +154,12 @@ const DevicesInfo: React.FC<DevicesFormProps> = ({
                 <div className="d-flex justify-content-between">
                     <Button
                         variant="danger"
-                        onClick={() => handleCancelWithDelete(experimentId, onDeleteExperiment)}
+                        onClick={() =>
+                            handleCancelWithDelete(
+                                experimentId,
+                                onDeleteExperiment
+                            )
+                        }
                         disabled={isSubmitting}
                         size="lg"
                     >

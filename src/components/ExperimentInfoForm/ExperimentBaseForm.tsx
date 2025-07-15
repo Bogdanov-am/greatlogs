@@ -228,16 +228,6 @@ const ExperimentBaseForm: React.FC<ExperimentBaseFormProps> = ({
                     </div>
                 )}
             </Form.Group>
-
-            {/* <Form.Group className="mb-3 mt-4">
-                <Form.Check
-                    type="checkbox"
-                    label={<h5>Наличие событий</h5>}
-                    name="hasEvents"
-                    checked={data.hasEvents}
-                    onChange={handleCheckboxChange}
-                />
-            </Form.Group> */}
         </>
     );
 };
